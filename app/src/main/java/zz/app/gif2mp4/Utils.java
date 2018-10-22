@@ -249,7 +249,7 @@ public class Utils {
 
     public static native int gif2mp4(String gifpath, String mp4path, int encodertypenum, double bitrate, double outputtime, int framecnt);
 
-    public static native int mp42gif(String mp4path,String gifpath,int fps,int rot,int width,int height,double start,double end);
+    public static native int mp42gif(String mp4path,String gifpath,int fps,int rotate,int width,int height,double start,double end);
 
 
 }

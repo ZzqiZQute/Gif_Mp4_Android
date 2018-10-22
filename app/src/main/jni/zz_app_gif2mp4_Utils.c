@@ -434,3 +434,251 @@ JNIEXPORT jint JNICALL Java_zz_app_gif2mp4_Utils_gif2mp4
 	return(SUCCESSCODE);
 }
 
+JNIEXPORT jint JNICALL Java_zz_app_gif2mp4_Utils_mp42gif
+  (JNIEnv * env, jclass cls, jstring mp4path, jstring gifpath, jint _fps, jint _rotate, jint _width, jint _height, jdouble _start, jdouble _end)
+  {
+    char	*input	= jstringToChar( env, mp4path );
+  	char	*output = jstringToChar( env, gifpath );
+    AVFormatContext *infmtctx = NULL;
+	AVFormatContext *outfmtctx = NULL;
+	AVCodecContext *decctx = NULL;
+	AVCodecContext *encctx = NULL;
+	int framecnt;
+	double time;
+	int ret, ret2;
+	int video_index;
+	int rotate=0;
+	double fps;
+	int output_w, output_h;
+	int i,j,ii,jj;
+	ret = avformat_open_input(&infmtctx,input, NULL, NULL);
+	if (ret < 0)
+		goto FAIL;
+	ret = avformat_find_stream_info(infmtctx, NULL);
+	if (ret < 0)
+		goto FAIL;
+
+	for ( i = 0; i < infmtctx->nb_streams; i++)
+	{
+		if (infmtctx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO)
+		{
+			video_index = i;
+			break;
+
+		}
+	}
+	AVStream* video_stream = infmtctx->streams[video_index];
+	double video_fps = av_q2d(video_stream->avg_frame_rate);
+	if (_fps == -1)fps = video_fps;
+	else fps=_fps;
+	double ptsdelta = 100 / video_fps;
+	double frame_interval = video_fps / fps;
+	AVDictionaryEntry *m = NULL;
+	if((m = av_dict_get(video_stream->metadata, "rotate", m, AV_DICT_IGNORE_SUFFIX)) != NULL) {
+		rotate=atoi(m->value);
+	}
+	rotate+=_rotate;
+	if (rotate < 0)
+		rotate += 360;
+	else if(rotate>360)
+	    rotate -=360;
+	framecnt = video_stream->nb_frames;
+	time = video_stream->duration*av_q2d(video_stream->time_base);
+	AVCodec *c = avcodec_find_decoder(video_stream->codecpar->codec_id);//H264?
+	decctx = avcodec_alloc_context3(NULL);
+	avcodec_parameters_to_context(decctx, video_stream->codecpar);
+	ret = avcodec_open2(decctx, c, NULL);
+	if (ret < 0)
+		goto FAIL;
+	if (_width == -1)output_w = decctx->width;
+	else output_w=_width;
+	if (_height == -1)output_h = decctx->height;
+	else output_h=_height;
+	avformat_alloc_output_context2(&outfmtctx, NULL, NULL,output);
+	AVStream* out_stream = avformat_new_stream(outfmtctx, NULL);
+	AVCodec* c2 = avcodec_find_encoder(outfmtctx->oformat->video_codec);
+	encctx = avcodec_alloc_context3(NULL);
+
+	encctx->width = output_w;
+	encctx->height = output_h;
+
+	encctx->codec_id = outfmtctx->oformat->video_codec;
+	encctx->codec_type = AVMEDIA_TYPE_VIDEO;
+	encctx->pix_fmt = AV_PIX_FMT_BGR8;
+	encctx->time_base = (AVRational){ 1,1 };
+	avcodec_parameters_from_context(out_stream->codecpar,encctx);
+	ret = avcodec_open2(encctx, c2, NULL);
+	if (ret < 0)
+			goto FAIL;
+
+	if (!(outfmtctx->flags&AVFMT_NOFILE))
+	{
+		ret = avio_open(&outfmtctx->pb, output, AVIO_FLAG_WRITE);
+		if (ret < 0)
+				goto FAIL;
+	}
+	AVPacket packet;
+	AVPacket packet2;
+	av_new_packet(&packet2, encctx->width*encctx->height * 3);
+	AVFrame *frame = av_frame_alloc();
+	AVFrame *frame2 = av_frame_alloc();
+	AVFrame *frame3 = av_frame_alloc();
+	AVFrame *frame4 = av_frame_alloc();
+
+	struct SwsContext *swsctx = sws_getContext(decctx->width, decctx->height, decctx->pix_fmt, decctx->width, decctx->height, encctx->pix_fmt, SWS_BICUBIC, NULL, NULL, NULL);
+	struct SwsContext *swsctx2 = NULL;
+	if(rotate==0||rotate==180)
+		swsctx2 = sws_getContext(decctx->width, decctx->height, AV_PIX_FMT_BGR8, output_w, output_h, AV_PIX_FMT_BGR8, SWS_BICUBIC, NULL, NULL, NULL);
+	else
+		swsctx2 = sws_getContext(decctx->height, decctx->width, AV_PIX_FMT_BGR8, output_w, output_h, AV_PIX_FMT_BGR8, SWS_BICUBIC, NULL, NULL, NULL);
+	ret = 0;
+    i=0;
+	int frmcnt = 0;
+	double frame_num = 0;
+	double pts_sum = 0;
+	double frame_sum = 0;
+	ret=avformat_write_header(outfmtctx, NULL);
+	if (ret < 0)
+    		goto FAIL;
+	while (av_read_frame(infmtctx, &packet) >= 0) {
+
+		if (packet.stream_index == video_index) {
+			int ret = avcodec_send_packet(decctx, &packet);
+
+			if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF)
+				continue;
+
+			ret = avcodec_receive_frame(decctx, frame);
+
+			if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF)
+			{
+				av_frame_unref(frame);
+				continue;
+			}
+			printf("total frames:%d current:%d\n", (int)video_stream->nb_frames, ++frmcnt);
+			frame2->width = decctx->width;
+			frame2->height = decctx->height;
+			frame2->format = encctx->pix_fmt;
+			frame3->format = encctx->pix_fmt;
+
+			av_frame_get_buffer(frame2, 32);
+			sws_scale(swsctx, (const uint8_t * const*)frame->data, frame->linesize, 0, frame2->height, frame2->data, frame2->linesize);
+			av_frame_unref(frame);
+
+			//rotate
+			if (rotate == 0)
+			{
+				frame3->width = frame2->width;
+				frame3->height = frame2->height;
+				av_frame_get_buffer(frame3, 32);
+				av_frame_copy(frame3, frame2);
+			}
+			else if (rotate == 90)
+			{
+				frame3->width = frame2->height;
+				frame3->height = frame2->width;
+				av_frame_get_buffer(frame3, 32);
+
+				for ( ii = 0; ii < frame3->width; ii++)
+					for ( jj = 0; jj < frame3->height; jj++) {
+						*(frame3->data[0] + jj*frame3->width + ii) = *(frame2->data[0] + (frame2->height - 1 - ii)*frame2->width + jj);
+					}
+
+			}
+			else if (rotate == 180)
+			{
+				frame3->width = frame2->width;
+				frame3->height = frame2->height;
+				av_frame_get_buffer(frame3, 32);
+
+
+				for ( ii = 0; ii < frame3->width; ii++)
+					for ( jj = 0; jj < frame3->height; jj++) {
+						*(frame3->data[0] + jj*frame3->width + ii) = *(frame2->data[0] + (frame2->height - 1 - jj)*frame2->width + frame2->width - 1 - ii);
+					}
+			}
+			else if (rotate == 270)
+			{
+				frame3->width = frame2->height;
+				frame3->height = frame2->width;
+				av_frame_get_buffer(frame3, 32);
+
+				for ( ii = 0; ii < frame3->width; ii++)
+					for ( jj = 0; jj < frame3->height; jj++) {
+						*(frame3->data[0] + jj*frame3->width + ii) = *(frame2->data[0] + ii*frame2->width + frame2->width - 1 - jj);
+					}
+			}
+			av_frame_unref(frame2);
+			frame4->width = output_w;
+			frame4->height = output_h;
+			frame4->format = AV_PIX_FMT_BGR8;
+			av_frame_get_buffer(frame4,32);
+			sws_scale(swsctx2, (const uint8_t * const*)frame3->data, frame3->linesize, 0, frame3->height, frame4->data, frame4->linesize);
+			av_frame_unref(frame3);
+			pts_sum += ptsdelta;
+			frame4->pts = (int)pts_sum;
+			frame_num++;
+			if (frame_num > frame_interval) {
+				frame_num -= frame_interval;
+				ret = avcodec_send_frame(encctx, frame4);
+				av_frame_unref(frame4);
+				if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF)
+					continue;
+			}
+			else {
+				av_frame_unref(frame4);
+			}
+			while (ret >= 0)
+			{
+				ret = avcodec_receive_packet(encctx, &packet2);
+
+				if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF)
+					continue;
+				av_write_frame(outfmtctx, &packet2);
+
+			}
+
+
+		}
+		av_packet_unref(&packet);
+		av_packet_unref(&packet2);
+	}
+	ret2 = 0;
+	while (ret2 >= 0) {
+		avcodec_send_frame(encctx, NULL);
+		while (ret2 >= 0)
+		{
+			ret2 = avcodec_receive_packet(encctx, &packet2);
+			if (ret2 == AVERROR(EAGAIN) || ret2 == AVERROR_EOF)
+				continue;
+			av_write_frame(outfmtctx, &packet2);
+			av_packet_unref(&packet2);
+
+		}
+	}
+	av_write_trailer(outfmtctx);
+	avio_close( outfmtctx->pb );
+    	sws_freeContext( swsctx );
+    	sws_freeContext( swsctx2 );
+    	avcodec_free_context( &decctx );
+    	avcodec_free_context( &encctx );
+    	av_frame_free( &frame );
+    	av_frame_free( &frame2 );
+    	avformat_free_context( infmtctx );
+    	avformat_free_context( outfmtctx );
+    	free( input );
+    	free( output );
+	return SUCCESSCODE;
+	FAIL:
+	sws_freeContext( swsctx );
+        	sws_freeContext( swsctx2 );
+        	avcodec_free_context( &decctx );
+        	avcodec_free_context( &encctx );
+        	av_frame_free( &frame );
+        	av_frame_free( &frame2 );
+        	avformat_free_context( infmtctx );
+        	avformat_free_context( outfmtctx );
+        	free( input );
+        	free( output );
+	    return GIF2MP4_UNKNOWN_ERROR;
+  }
