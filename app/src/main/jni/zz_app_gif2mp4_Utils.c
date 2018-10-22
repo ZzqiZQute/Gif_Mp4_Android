@@ -1,0 +1,436 @@
+#include <unistd.h>
+#include <sys/stat.h>
+#include <stdlib.h>
+#include "zz_app_gif2mp4_Utils.h"
+#include "android/log.h"
+#include "libavformat/avformat.h"
+#include "libavcodec/avcodec.h"
+#include "libavutil/opt.h"
+#include "libswscale/swscale.h"
+#include "math.h"
+#define SUCCESSCODE	233
+#define MP4TIMESCALE	60
+#define LOGD( ... )	__android_log_print( ANDROID_LOG_DEBUG, "gif2mp4_zz", __VA_ARGS__ )
+#define LOGE( ... )	__android_log_print( ANDROID_LOG_ERROR, "gif2mp4_zz", __VA_ARGS__ )
+enum GIF2MP4ErrorType {
+	GIF2MP4_UNKNOWN_ERROR,
+	GIF2MP4_H264_NOTFOUND,
+	GIF2MP4_NOT_ACTION
+};
+jint progress;
+jstring charTojstring( JNIEnv* env, const char* pat )
+{
+	/* 定义java String类 strClass */
+	jclass strClass = (*env)->FindClass( env, "Ljava/lang/String;" );
+	/* 获取String(byte[],String)的构造器,用于将本地byte[]数组转换为一个新String */
+	jmethodID ctorID = (*env)->GetMethodID( env, strClass, "<init>", "([BLjava/lang/String;)V" );
+	/* 建立byte数组 */
+	jbyteArray bytes = (*env)->NewByteArray( env, strlen( pat ) );
+	/* 将char* 转换为byte数组 */
+	(*env)->SetByteArrayRegion( env, bytes, 0, strlen( pat ), (jbyte *) pat );
+	/* 设置String, 保存语言类型,用于byte数组转换至String时的参数 */
+	jstring encoding = (*env)->NewStringUTF( env, "UTF-8" );
+	/* 将byte数组转换为java String,并输出 */
+	return( (jstring) (*env)->NewObject( env, strClass, ctorID, bytes, encoding ) );
+}
+
+
+char* jstringToChar( JNIEnv* env, jstring jstr )
+{
+	char		* rtn		= NULL;
+	jclass		clsstring	= (*env)->FindClass( env, "java/lang/String" );
+	jstring		strencode	= (*env)->NewStringUTF( env, "UTF-8" );
+	jmethodID	mid		= (*env)->GetMethodID( env, clsstring, "getBytes", "(Ljava/lang/String;)[B" );
+	jbyteArray	barr		= (jbyteArray) (*env)->CallObjectMethod( env, jstr, mid, strencode );
+	jsize		alen		= (*env)->GetArrayLength( env, barr );
+	jbyte		* ba		= (*env)->GetByteArrayElements( env, barr, JNI_FALSE );
+	if ( alen > 0 )
+	{
+		rtn = (char *) malloc( alen + 1 );
+		memcpy( rtn, ba, alen );
+		rtn[alen] = 0;
+	}
+	(*env)->ReleaseByteArrayElements( env, barr, ba, 0 );
+	return(rtn);
+}
+
+
+JNIEXPORT void JNICALL Java_zz_app_gif2mp4_Utils_welcome
+	( JNIEnv * env, jclass cls )
+{
+	LOGD( "Hello FFMpeg!" );
+}
+
+
+
+
+JNIEXPORT jboolean JNICALL Java_zz_app_gif2mp4_Utils_checkgif
+	( JNIEnv * env, jclass cls, jstring path )
+{
+	float		rate = 1;
+	float		realspeed;
+	jboolean	retval		= 1;
+	char		*input		= jstringToChar( env, path );
+	AVFormatContext * inputFmtCtx	= avformat_alloc_context();
+	int		rtn		= avformat_open_input( &inputFmtCtx, input, NULL, NULL );
+	if ( rtn < 0 )
+	{
+		retval = 0;
+		goto END;
+	}
+	avformat_find_stream_info( inputFmtCtx, NULL );
+	if ( rtn < 0 )
+	{
+		retval = 0;
+		goto END;
+	}
+	int	vsnb	= -1;
+	int	i	= 0, j = 0, k = 0;
+	float	sum	= 0;
+	for (; i < inputFmtCtx->nb_streams; i++ )
+	{
+		if ( inputFmtCtx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO )
+		{
+			vsnb = i;
+			break;
+		}
+	}
+	if ( vsnb != -1 )
+	{
+		if ( inputFmtCtx->streams[vsnb]->avg_frame_rate.den == 0 || realspeed == 0 )
+		{
+			retval = 0;
+			goto END;
+		}
+	}else retval = 0;
+	END :
+	free( input );
+	avformat_free_context( inputFmtCtx );
+	return(retval);
+}
+
+
+JNIEXPORT jint JNICALL Java_zz_app_gif2mp4_Utils_gifframes
+	( JNIEnv * env, jclass cls, jstring path )
+{
+	char		*input		= jstringToChar( env, path );
+	AVFormatContext * inputFmtCtx	= avformat_alloc_context();
+	int		rtn		= avformat_open_input( &inputFmtCtx, input, NULL, NULL );
+	if ( rtn < 0 )
+		return(-1);
+	avformat_find_stream_info( inputFmtCtx, NULL );
+	if ( rtn < 0 )
+		return(-1);
+	int	vsnb	= -1;
+	int	i	= 0;
+	for (; i < inputFmtCtx->nb_streams; i++ )
+	{
+		if ( inputFmtCtx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO )
+		{
+			vsnb = i;
+			break;
+		}
+	}
+	AVCodecContext *decoderCtx = avcodec_alloc_context3( NULL );
+	if ( vsnb != -1 )
+	{
+		AVCodec* codec = avcodec_find_decoder( inputFmtCtx->streams[vsnb]->codecpar->codec_id );
+		avcodec_parameters_to_context( decoderCtx, inputFmtCtx->streams[vsnb]->codecpar );
+		avcodec_open2( decoderCtx, codec, NULL );
+	}
+	AVPacket pkt;
+	i = 0;
+	int	ret;
+	AVFrame *frame = av_frame_alloc();
+
+	while ( av_read_frame( inputFmtCtx, &pkt ) >= 0 )
+	{
+		if ( pkt.stream_index == vsnb )
+		{
+			ret = avcodec_send_packet( decoderCtx, &pkt );
+			while ( ret >= 0 )
+			{
+				ret = avcodec_receive_frame( decoderCtx, frame );
+				if ( ret == AVERROR( EAGAIN ) || ret == AVERROR_EOF )
+					continue;
+				i++;
+			}
+		}
+	}
+	avcodec_free_context( &decoderCtx );
+	av_frame_free( &frame );
+	avformat_free_context( inputFmtCtx );
+	free( input );
+	return(i);
+}
+
+
+JNIEXPORT jfloat JNICALL Java_zz_app_gif2mp4_Utils_gifavgrate
+	( JNIEnv * env, jclass cls, jstring path )
+{
+	float		rate		= 1;
+	char		*input		= jstringToChar( env, path );
+	AVFormatContext * inputFmtCtx	= avformat_alloc_context();
+	avformat_open_input( &inputFmtCtx, input, NULL, NULL );
+	avformat_find_stream_info( inputFmtCtx, NULL );
+	int	vsnb	= -1;
+	int	i	= 0, j = 0, k = 0;
+	float	sum	= 0;
+	for (; i < inputFmtCtx->nb_streams; i++ )
+	{
+		if ( inputFmtCtx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO )
+		{
+			vsnb = i;
+			break;
+		}
+	}
+	if ( vsnb != -1 )
+	{
+		rate = ( ( (float) inputFmtCtx->streams[vsnb]->avg_frame_rate.num) / inputFmtCtx->streams[vsnb]->avg_frame_rate.den);
+	}
+
+	free( input );
+	avformat_free_context( inputFmtCtx );
+	return(rate);
+}
+
+
+JNIEXPORT jint JNICALL Java_zz_app_gif2mp4_Utils_gif2mp4
+	( JNIEnv * env, jclass cls, jstring inputpath, jstring outputpath, jint enc, jdouble bitr, jdouble time, jint framecnt )
+{
+	progress = 0;
+	double	rate = 1;
+	float	realspeed;
+	int	rtn;
+	char	*input	= jstringToChar( env, inputpath );
+	char	*output = jstringToChar( env, outputpath );
+	LOGD( "input = %s", input );
+	LOGD( "output = %s", output );
+	AVFormatContext * inputFmtCtx	= avformat_alloc_context();
+	AVFormatContext * outputFmtCtx	= avformat_alloc_context();
+	LOGD( "AVFormatContext create successfully" );
+	rtn = avformat_open_input( &inputFmtCtx, input, NULL, NULL );
+	if ( rtn < 0 )
+		return(GIF2MP4_UNKNOWN_ERROR);
+	LOGD( "avformat_open_input  successfully" );
+	avformat_find_stream_info( inputFmtCtx, NULL );
+	if ( rtn < 0 )
+		return(GIF2MP4_UNKNOWN_ERROR);
+	LOGD( "avformat_find_stream_info successfully" );
+	int	vsnb	= -1;
+	int	i	= 0, j = 0, k = 0;
+	float	sum	= 0;
+	for (; i < inputFmtCtx->nb_streams; i++ )
+	{
+		if ( inputFmtCtx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO )
+		{
+			vsnb = i;
+			break;
+		}
+	}
+	AVCodecContext *decoderCtx = avcodec_alloc_context3( NULL );
+	if ( vsnb != -1 )
+	{
+		LOGD( "input type = %d", inputFmtCtx->streams[vsnb]->codecpar->codec_id );
+		LOGD( "frame_rate_num = %d frame_rate_den = %d", inputFmtCtx->streams[vsnb]->avg_frame_rate.num, inputFmtCtx->streams[vsnb]->avg_frame_rate.den );
+		if ( inputFmtCtx->streams[vsnb]->avg_frame_rate.den == 0 )
+		{
+			return(GIF2MP4_NOT_ACTION);
+		}
+
+		rate		= framecnt / time;
+		realspeed	= MP4TIMESCALE / rate;
+		LOGD( "rate = %f", rate );
+		LOGD( "realspeed = %f", realspeed );
+		if ( realspeed == 0 )
+		{
+			return(GIF2MP4_NOT_ACTION);
+		}
+
+		AVCodec* codec = avcodec_find_decoder( inputFmtCtx->streams[vsnb]->codecpar->codec_id );
+		avcodec_parameters_to_context( decoderCtx, inputFmtCtx->streams[vsnb]->codecpar );
+		avcodec_open2( decoderCtx, codec, NULL );
+
+		LOGD( "open decoder  successfully" );
+	}
+	avformat_alloc_output_context2( &outputFmtCtx, NULL, NULL, output );
+	AVStream	*stream		= avformat_new_stream( outputFmtCtx, NULL );
+	AVCodecContext	* encoderCtx	= avcodec_alloc_context3( NULL );
+	if ( enc == 0 )
+	{
+		LOGD( "codec id = %d", outputFmtCtx->oformat->video_codec );
+		AVCodec* codec = avcodec_find_encoder( outputFmtCtx->oformat->video_codec );
+		encoderCtx->codec_id	= outputFmtCtx->oformat->video_codec;
+		encoderCtx->codec_type	= AVMEDIA_TYPE_VIDEO;
+		encoderCtx->width	= decoderCtx->width / 2 * 2;
+		encoderCtx->height	= decoderCtx->height / 2 * 2;
+		LOGD( "input width=%d height=%d output width=%d height=%d", decoderCtx->width, decoderCtx->height, encoderCtx->width, encoderCtx->height );
+		encoderCtx->bit_rate		= (int) bitr;
+		encoderCtx->qcompress		= 0.6;
+		encoderCtx->max_qdiff		= 3;
+		encoderCtx->qmin		= 10;
+		encoderCtx->qmax		= 51;
+		encoderCtx->me_range		= 16;
+		encoderCtx->gop_size		= 12;
+		encoderCtx->max_b_frames	= 1;
+		encoderCtx->thread_count	= 4;
+		encoderCtx->pix_fmt		= AV_PIX_FMT_YUV420P;
+		AVRational r = { 1, MP4TIMESCALE };
+		encoderCtx->time_base = r;
+		unsigned char sps_pps[23] = { 0x00, 0x00, 0x00, 0x01, 0x67, 0x42, 0x00, 0x0a, 0xf8, 0x0f, 0x00, 0x44, 0xbe, 0x8,
+					      0x00, 0x00, 0x00, 0x01, 0x68, 0xce, 0x38, 0x80 };
+		encoderCtx->extradata_size	= 23;
+		encoderCtx->extradata		= (uint8_t *) av_malloc( 23 + AV_INPUT_BUFFER_PADDING_SIZE );
+		if ( encoderCtx->extradata == NULL )
+		{
+			LOGE( "could not av_malloc the video params extradata!" );
+			return(GIF2MP4_UNKNOWN_ERROR);
+		}
+		memcpy( encoderCtx->extradata, sps_pps, 23 );
+
+		av_opt_set( encoderCtx->priv_data, "tune", "zerolatency", 0 );
+		av_opt_set( encoderCtx->priv_data, "preset", "superfast", 0 );
+		avcodec_parameters_from_context( stream->codecpar, encoderCtx );
+		rtn = avcodec_open2( encoderCtx, codec, NULL );
+		if ( rtn >= 0 )
+			LOGD( "open encoder  successfully" );
+		else{
+			LOGE( "open encoder  failed(H264)" );
+			return(GIF2MP4_H264_NOTFOUND);
+		}
+	}else{
+		LOGD( "codec id = %d", AV_CODEC_ID_MPEG4 );
+		AVCodec* codec = avcodec_find_encoder( AV_CODEC_ID_MPEG4 );
+		encoderCtx->codec_id	= AV_CODEC_ID_MPEG4;
+		encoderCtx->codec_type	= AVMEDIA_TYPE_VIDEO;
+		encoderCtx->width	= decoderCtx->width / 2 * 2;
+		encoderCtx->height	= decoderCtx->height / 2 * 2;
+		LOGD( "input width=%d height=%d output width=%d height=%d", decoderCtx->width, decoderCtx->height, encoderCtx->width, encoderCtx->height );
+		encoderCtx->bit_rate		= (int) bitr;
+		encoderCtx->qcompress		= 0.6;
+		encoderCtx->max_qdiff		= 3;
+		encoderCtx->qmin		= 10;
+		encoderCtx->qmax		= 51;
+		encoderCtx->me_range		= 16;
+		encoderCtx->gop_size		= 12;
+		encoderCtx->max_b_frames	= 1;
+		encoderCtx->thread_count	= 4;
+		encoderCtx->pix_fmt		= AV_PIX_FMT_YUV420P;
+		AVRational r = { 1, MP4TIMESCALE };
+		encoderCtx->time_base = r;
+
+		av_opt_set( encoderCtx->priv_data, "tune", "zerolatency", 0 );
+		av_opt_set( encoderCtx->priv_data, "preset", "superfast", 0 );
+		avcodec_parameters_from_context( stream->codecpar, encoderCtx );
+		rtn = avcodec_open2( encoderCtx, codec, NULL );
+		if ( rtn >= 0 )
+			LOGD( "open encoder  successfully" );
+		else{
+			LOGE( "open encoder  failed(MPEG4)" );
+			return(GIF2MP4_UNKNOWN_ERROR);
+		}
+	}
+	if ( !(outputFmtCtx->oformat->flags & AVFMT_NOFILE) )
+	{
+		avio_open( &outputFmtCtx->pb, output, AVIO_FLAG_WRITE );
+	}
+	AVDictionary *dic = NULL;
+	av_dict_set_int( &dic, "video_track_timescale", MP4TIMESCALE, 0 );
+	av_dict_set( &dic, "movflags", "faststart", 0 );
+	rtn = avformat_write_header( outputFmtCtx, &dic );
+	if ( rtn < 0 )
+		return(GIF2MP4_UNKNOWN_ERROR);
+	LOGD( "avformat_write_header  successfully" );
+	i = 0;
+	int		ret, ret2, ret3;
+	AVPacket	pkt,pkt2;
+	AVFrame		*frame		= av_frame_alloc();
+	AVFrame		* frame2	= av_frame_alloc();
+	av_new_packet( &pkt2, decoderCtx->width * decoderCtx->height * 3 );
+	struct SwsContext* swsctx = sws_getContext( decoderCtx->width, decoderCtx->height, decoderCtx->pix_fmt,
+						    decoderCtx->width % 4 != 0 ? encoderCtx->width + 4 : encoderCtx->width, decoderCtx->height % 4 != 0 ? encoderCtx->height + 4 : encoderCtx->height,
+								    encoderCtx->pix_fmt, SWS_BICUBIC, NULL, NULL, NULL );
+	while ( av_read_frame( inputFmtCtx, &pkt ) >= 0 )
+	{
+		LOGD( "av_read_frame pkt size = %d", pkt.size );
+		if ( pkt.stream_index == vsnb )
+		{
+			ret = avcodec_send_packet( decoderCtx, &pkt );
+			LOGD( "avcodec_send_packet" );
+			while ( ret >= 0 )
+			{
+				ret = avcodec_receive_frame( decoderCtx, frame );
+				if ( ret == AVERROR( EAGAIN ) || ret == AVERROR_EOF )
+					continue;
+				LOGD( "avcodec_receive_frame" );
+				frame2->width	= encoderCtx->width;
+				frame2->height	= encoderCtx->height;
+				frame2->format	= encoderCtx->pix_fmt;
+				i++;
+				progress = i * 100 / framecnt;
+				jclass		clazz		= (*env)->FindClass( env, "zz/app/gif2mp4/Utils" );
+				jmethodID	methodID	= (*env)->GetStaticMethodID( env, clazz, "setProgress2", "(I)V" );
+				(*env)->CallStaticVoidMethod( env, cls, methodID, progress );
+				LOGD( "pix width=%d height=%d format=%d", frame2->width, frame2->height, frame2->format );
+				av_frame_get_buffer( frame2, 32 );
+				sws_scale( swsctx, (const uint8_t * const *) frame->data, frame->linesize, 0, frame2->height, frame2->data, frame2->linesize );
+				av_frame_unref(frame);
+				frame2->pts	= (int) sum;
+				sum		+= realspeed;
+				ret2		= avcodec_send_frame( encoderCtx, frame2 );
+				av_frame_unref(frame2);
+				if ( ret2 == AVERROR( EAGAIN ) || ret == AVERROR_EOF )
+					continue;
+				LOGD( "avcodec_send_frame i = %d", (int) sum );
+				ret2 = avcodec_receive_packet( encoderCtx, &pkt2 );
+				if ( ret2 == AVERROR( EAGAIN ) || ret2 == AVERROR_EOF )
+					continue;
+				LOGD( "avcodec_receive_packet size=%d", pkt2.size );
+				pkt2.stream_index = stream->index;
+				av_write_frame( outputFmtCtx, &pkt2 );
+				av_packet_unref(&pkt2);
+				LOGD( "av_write_frame" );
+			}
+		}
+		av_packet_unref(&pkt);
+	}
+	ret2 = 0;
+	while ( ret2 >= 0 )
+	{
+		ret2 = avcodec_send_frame( encoderCtx, NULL );
+		if ( ret2 == AVERROR( EAGAIN ) || ret == AVERROR_EOF )
+			continue;
+		sum += realspeed;
+		LOGD( "avcodec_send_frame fake i = %d", (int) sum );
+		ret2 = avcodec_receive_packet( encoderCtx, &pkt2 );
+		if ( ret2 == AVERROR( EAGAIN ) || ret2 == AVERROR_EOF )
+			continue;
+		LOGD( "avcodec_receive_packet size=%d", pkt2.size );
+		pkt2.stream_index = stream->index;
+		av_write_frame( outputFmtCtx, &pkt2 );
+		av_packet_unref(&pkt2);
+		LOGD( "av_write_frame" );
+	}
+
+	rtn = av_write_trailer( outputFmtCtx );
+	if ( rtn < 0 )
+		return(GIF2MP4_UNKNOWN_ERROR);
+	LOGD( "av_write_trailer complete successfully" );
+	avio_close( outputFmtCtx->pb );
+	sws_freeContext( swsctx );
+	avcodec_free_context( &decoderCtx );
+	avcodec_free_context( &encoderCtx );
+	LOGD( "avcodec_free_context complete successfully" );
+	av_frame_free( &frame );
+	av_frame_free( &frame2 );
+	LOGD( "av_frame_free complete successfully" );
+	avformat_free_context( inputFmtCtx );
+	avformat_free_context( outputFmtCtx );
+	LOGD( "avformat_free_context complete successfully" );
+	av_dict_free( &dic );
+	LOGD( "av_dict_free complete successfully" );
+	free( input );
+	free( output );
+	return(SUCCESSCODE);
+}
+

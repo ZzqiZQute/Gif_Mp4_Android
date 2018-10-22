@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Gif2MP4</string>
+    <string name="gif">gif</string>
+    <string name="str_loading">加载中</string>
+    <string name="str_sort">排序</string>
+    <string name="str_pleasewait">请稍后</string>
+    <string name="str_converting">拼命转换中…</string>
+</resources>

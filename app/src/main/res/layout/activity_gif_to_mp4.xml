@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<zz.app.gif2mp4.YellowTopFrameLayout xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/flselectpicwrapper">
+
+    </FrameLayout>
+    <RelativeLayout
+        android:id="@+id/mainlayout"
+        android:visibility="invisible"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+        <FrameLayout
+            android:layout_alignParentBottom="true"
+            android:layout_width="match_parent"
+            android:layout_height="100dp"
+            android:paddingBottom="20dp"
+            android:id="@+id/outputlayout">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="horizontal"
+                android:baselineAligned="false"
+                tools:ignore="UselessParent">
+                <RelativeLayout
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="2">
+                    <Button
+                        android:layout_width="120dp"
+                        android:layout_height="40dp"
+                        android:layout_margin="10dp"
+                        android:layout_centerInParent="true"
+                        android:id="@+id/btnweixin"
+                        android:layout_gravity="center_vertical"
+                        android:background="@drawable/wxdrawable" />
+                </RelativeLayout>
+
+                <LinearLayout
+                    android:padding="10dp"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                </LinearLayout>
+
+                <RelativeLayout
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="2">
+                    <Button
+                        android:layout_margin="10dp"
+                        android:layout_width="150dp"
+                        android:layout_centerInParent="true"
+                        android:layout_height="match_parent"
+                        android:id="@+id/btnoutput"
+                        android:text="转换"
+                        android:background="@drawable/outputdrawable"/>
+                </RelativeLayout>
+
+            </LinearLayout>
+
+        </FrameLayout>
+<android.support.v7.widget.RecyclerView
+    android:layout_above="@id/outputlayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:id="@+id/g2mconfiglistview"
+  >
+
+
+</android.support.v7.widget.RecyclerView>
+
+</RelativeLayout>
+
+</zz.app.gif2mp4.YellowTopFrameLayout>
