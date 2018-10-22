@@ -437,6 +437,7 @@ JNIEXPORT jint JNICALL Java_zz_app_gif2mp4_Utils_gif2mp4
 JNIEXPORT jint JNICALL Java_zz_app_gif2mp4_Utils_mp42gif
   (JNIEnv * env, jclass cls, jstring mp4path, jstring gifpath, jint _fps, jint _rotate, jint _width, jint _height, jdouble _start, jdouble _end)
   {
+  progress = 0;
     char	*input	= jstringToChar( env, mp4path );
   	char	*output = jstringToChar( env, gifpath );
     AVFormatContext *infmtctx = NULL;
@@ -447,6 +448,7 @@ JNIEXPORT jint JNICALL Java_zz_app_gif2mp4_Utils_mp42gif
 	double time;
 	int ret, ret2;
 	int video_index;
+	double start_,end_;
 	int rotate=0;
 	double fps;
 	int output_w, output_h;
@@ -469,10 +471,16 @@ JNIEXPORT jint JNICALL Java_zz_app_gif2mp4_Utils_mp42gif
 	}
 	AVStream* video_stream = infmtctx->streams[video_index];
 	double video_fps = av_q2d(video_stream->avg_frame_rate);
+
 	if (_fps == -1)fps = video_fps;
 	else fps=_fps;
 	double ptsdelta = 100 / video_fps;
 	double frame_interval = video_fps / fps;
+	AVRational video_time_base = video_stream->time_base;
+	if(_start==-1)start_=0;
+	else start_=_start;
+	if(_end==-1)end_=video_stream->nb_frames*av_q2d(video_time_base);
+	else end_=_end;
 	AVDictionaryEntry *m = NULL;
 	if((m = av_dict_get(video_stream->metadata, "rotate", m, AV_DICT_IGNORE_SUFFIX)) != NULL) {
 		rotate=atoi(m->value);
@@ -540,6 +548,7 @@ JNIEXPORT jint JNICALL Java_zz_app_gif2mp4_Utils_mp42gif
 	ret=avformat_write_header(outfmtctx, NULL);
 	if (ret < 0)
     		goto FAIL;
+    	av_seek_frame(infmtctx, video_index, (start_-5<0?start_:start_-5) / av_q2d(video_time_base), 0);
 	while (av_read_frame(infmtctx, &packet) >= 0) {
 
 		if (packet.stream_index == video_index) {
@@ -555,7 +564,23 @@ JNIEXPORT jint JNICALL Java_zz_app_gif2mp4_Utils_mp42gif
 				av_frame_unref(frame);
 				continue;
 			}
-			printf("total frames:%d current:%d\n", (int)video_stream->nb_frames, ++frmcnt);
+			double current_time = frame->pts*av_q2d(video_time_base);
+
+            			if (current_time < start_)
+            			{
+            				av_frame_unref(frame);
+            				continue;
+            			}
+            			else if (current_time > end_)
+            			{
+            				av_frame_unref(frame);
+            				goto FLUSH;
+
+            			}
+            			progress = (current_time-start_) * 100 / (end_-start_);
+                        				jclass		clazz		= (*env)->FindClass( env, "zz/app/gif2mp4/Utils" );
+                        				jmethodID	methodID	= (*env)->GetStaticMethodID( env, clazz, "setProgress2", "(I)V" );
+                        				(*env)->CallStaticVoidMethod( env, cls, methodID, progress );
 			frame2->width = decctx->width;
 			frame2->height = decctx->height;
 			frame2->format = encctx->pix_fmt;
@@ -643,6 +668,7 @@ JNIEXPORT jint JNICALL Java_zz_app_gif2mp4_Utils_mp42gif
 		av_packet_unref(&packet);
 		av_packet_unref(&packet2);
 	}
+FLUSH:
 	ret2 = 0;
 	while (ret2 >= 0) {
 		avcodec_send_frame(encctx, NULL);
