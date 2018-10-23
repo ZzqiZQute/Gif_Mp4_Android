@@ -9,11 +9,13 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.GridLayoutManager;
+import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Pair;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
@@ -93,9 +95,42 @@ public class ShowMp4Activity extends AppCompatActivity implements SwipeRefreshLa
         swipeRefreshLayout.setColorSchemeColors(getColor(R.color.colorAccent));
         swipeRefreshLayout.setOnRefreshListener(this);
         mp4ListView = findViewById(R.id.mp4listview);
-        mp4ListView.setLayoutManager(new GridLayoutManager(this, 1));
+        mp4ListView.setLayoutManager(new LinearLayoutManager(this));
         adapter = new Mp4ListViewAdapter(this, handler, new ArrayList<File>(), new ArrayList<Pair<String, Bitmap>>());
         mp4ListView.setAdapter(adapter);
+        mp4ListView.setOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
+                super.onScrollStateChanged(recyclerView, newState);
+                switch (newState) {
+                    case RecyclerView.SCROLL_STATE_SETTLING:
+                    case RecyclerView.SCROLL_STATE_DRAGGING:
+                        break;
+                    case RecyclerView.SCROLL_STATE_IDLE:
+                        final LinearLayoutManager manager = (LinearLayoutManager) recyclerView.getLayoutManager();
+                        handler.postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                int pos = manager.findFirstVisibleItemPosition();
+                                adapter.setPlayindex(pos);
+                                if(adapter.getLastplayindex()!=adapter.getPlayindex()){
+                                    adapter.setLastplayindex(adapter.getPlayindex());
+                                    adapter.notifyDataSetChanged();
+                                }
+                            }
+                        },100);
+
+
+
+
+                }
+            }
+
+            @Override
+            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+            }
+        });
         freshimg();
 
     }
@@ -121,7 +156,7 @@ public class ShowMp4Activity extends AppCompatActivity implements SwipeRefreshLa
             @Override
             public void run() {
                 files = Utils.getFiles(Magic, sorttype, ascending, true);
-                thumbnailMap=Utils.getThumbnailMap(ShowMp4Activity.this,files);
+                thumbnailMap = Utils.getThumbnailMap(ShowMp4Activity.this, files);
                 handler.obtainMessage(MSG_IMGOK).sendToTarget();
             }
         }).start();

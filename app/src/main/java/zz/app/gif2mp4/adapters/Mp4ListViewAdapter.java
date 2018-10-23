@@ -1,23 +1,30 @@
 package zz.app.gif2mp4.adapters;
 
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
 import android.graphics.Point;
+import android.graphics.SurfaceTexture;
 import android.graphics.drawable.BitmapDrawable;
+import android.media.MediaPlayer;
 import android.os.Handler;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.util.Pair;
+import android.view.Gravity;
 import android.view.LayoutInflater;
+import android.view.Surface;
+import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 
 import zz.app.gif2mp4.R;
@@ -36,17 +43,39 @@ public class Mp4ListViewAdapter extends RecyclerView.Adapter<Mp4ListViewAdapter.
     private Context context;
     private static final String TAG = "Mp4ListViewAdapter";
 
+    public int getPlayindex() {
+        return playindex;
+    }
+
+    public void setPlayindex(int playindex) {
+        this.playindex = playindex;
+    }
+
+    private int playindex = 0;
+
+    public int getLastplayindex() {
+        return lastplayindex;
+    }
+
+    public void setLastplayindex(int lastplayindex) {
+        this.lastplayindex = lastplayindex;
+    }
+
+    private int lastplayindex = 0;
+
     public void setReady(boolean ready) {
         this.ready = ready;
     }
 
-    private boolean ready=false;
+    private boolean ready = false;
+
     public Mp4ListViewAdapter(Context context, Handler handler, ArrayList<File> files, ArrayList<Pair<String, Bitmap>> thumbnailMap) {
         this.files = files;
         this.context = context;
         this.handler = handler;
         this.thumbnailMap = thumbnailMap;
         showfiles = new ArrayList<>();
+
 
     }
 
@@ -61,6 +90,7 @@ public class Mp4ListViewAdapter extends RecyclerView.Adapter<Mp4ListViewAdapter.
     @Override
     public void onBindViewHolder(final ViewHolder viewHolder, int i) {
         if (i > 0 && i < showfiles.size() + 1) {
+            final float start = viewHolder.cardView.getCardElevation();
             viewHolder.tvHint.setVisibility(View.INVISIBLE);
             ViewGroup.LayoutParams params = viewHolder.cardView.getLayoutParams();
             Point size = new Point();
@@ -71,7 +101,7 @@ public class Mp4ListViewAdapter extends RecyclerView.Adapter<Mp4ListViewAdapter.
             final ImageView imgView = viewHolder.imageView;
             viewHolder.tvImageName.setVisibility(View.GONE);
             viewHolder.tvImageName.setSelected(true);
-            String path = showfiles.get(i - 1);
+            final String path = showfiles.get(i - 1);
             File file = new File(path);
             String name = file.getName();
             viewHolder.tvImageName.setText(name);
@@ -100,8 +130,122 @@ public class Mp4ListViewAdapter extends RecyclerView.Adapter<Mp4ListViewAdapter.
                     });
                 }
             });
-        } else {
-            if(ready) {
+            viewHolder.imageView.setVisibility(View.VISIBLE);
+            if (viewHolder.flvideowrapper.getChildCount() == 3) {
+                LinearLayout layout = (LinearLayout) viewHolder.flvideowrapper.getChildAt(1);
+                TextureView textureView = (TextureView) layout.getChildAt(0);
+                layout.removeAllViews();
+                viewHolder.flvideowrapper.removeViewAt(1);
+
+            }
+
+            if (playindex == i - 1) {
+                final LinearLayout layout = new LinearLayout(context);
+                layout.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT));
+                layout.setGravity(Gravity.CENTER);
+                final TextureView textureView = new TextureView(context);
+                textureView.setSurfaceTextureListener(new TextureView.SurfaceTextureListener() {
+                    @Override
+                    public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
+                        MediaPlayer mediaPlayer = new MediaPlayer();
+                        mediaPlayer.setSurface(new Surface(surface));
+                        try {
+                            mediaPlayer.setDataSource(path);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                        mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+                            @Override
+                            public void onPrepared(MediaPlayer mp) {
+                                mp.setVolume(0, 0);
+                                mp.setLooping(true);
+                                mp.start();
+                            }
+                        });
+                        mediaPlayer.prepareAsync();
+                    }
+
+                    @Override
+                    public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
+
+                    }
+
+                    @Override
+                    public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
+                        return true;
+                    }
+
+                    @Override
+                    public void onSurfaceTextureUpdated(SurfaceTexture surface) {
+                        viewHolder.imageView.setVisibility(View.INVISIBLE);
+                    }
+                });
+
+                ViewGroup.MarginLayoutParams layoutParams = new ViewGroup.MarginLayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT);
+                int margin = (int) Utils.dp2px(context, 5);
+                layoutParams.setMargins(margin, margin, margin, margin);
+                textureView.setLayoutParams(layoutParams);
+                int[] mp4Size = Utils.getMp4Size(path);
+                int width = mp4Size[0];
+                int height = mp4Size[1];
+                float twidth = size.x - 2 * Utils.dp2px(context, 20);
+                float theight = (size.x) * 3 / 4 - 2 * Utils.dp2px(context, 5);
+                float rx;
+                float ry;
+                float rw;
+                float rh;
+                float rxs, rys, rxo, ryo;
+                if (width * theight > height * twidth) {
+                    rw = twidth;
+                    float temp = twidth * height / width;
+                    ry = (theight - temp) / 2;
+                    Matrix matrix = new Matrix();
+
+                    matrix.setScale(1, temp / theight);
+                    matrix.postTranslate(0, ry);
+
+                    textureView.setTransform(matrix);
+                } else {
+                    rh = theight;
+                    float temp = theight * width / height;
+                    rx = (twidth - temp) / 2;
+                    Matrix matrix = new Matrix();
+
+                    matrix.setScale(temp / twidth, 1);
+                    matrix.postTranslate(rx, 0);
+
+                    textureView.setTransform(matrix);
+                }
+
+                //  Toast.makeText(context,"width="+width+",height="+height+"\ntwidth="+(size.x-2*margin)+",theight="+(size.x*3/4-2*margin),Toast.LENGTH_SHORT).show();
+
+                layout.addView(textureView);
+                viewHolder.flvideowrapper.addView(layout, 1);
+            }
+            ValueAnimator animator = new ValueAnimator();
+            animator.setFloatValues(0, 1);
+            animator.setDuration(300);
+            animator.start();
+            animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                @Override
+                public void onAnimationUpdate(ValueAnimator animation) {
+                    float end;
+                    if (playindex == viewHolder.getPosition() - 1) {
+                        end = Utils.dp2px(context, 35);
+                    } else {
+                        end = Utils.dp2px(context, 5);
+                    }
+
+                    float v = (float) animation.getAnimatedValue();
+                    viewHolder.cardView.setCardElevation(start + (end - start) * v);
+
+                }
+            });
+
+        } else
+
+        {
+            if (ready) {
                 viewHolder.tvHint.setVisibility(View.VISIBLE);
                 if (i == 0) {
                     String s = "选择下面的一个Mp4文件吧！！！";
@@ -111,7 +255,7 @@ public class Mp4ListViewAdapter extends RecyclerView.Adapter<Mp4ListViewAdapter.
                     viewHolder.tvHint.setText(s);
                 }
             }
-            ViewGroup.LayoutParams params =  viewHolder.cardView.getLayoutParams();
+            ViewGroup.LayoutParams params = viewHolder.cardView.getLayoutParams();
             Point size = new Point();
             ((ShowMp4Activity) context).getWindowManager().getDefaultDisplay().getSize(size);
             params.height = size.y / 4;
@@ -147,6 +291,7 @@ public class Mp4ListViewAdapter extends RecyclerView.Adapter<Mp4ListViewAdapter.
         TextView tvLoadingHint;
         TextView tvImageName;
         FrameLayout frameLayout;
+        FrameLayout flvideowrapper;
         CardView cardView;
         TextView tvHint;
 
@@ -156,9 +301,11 @@ public class Mp4ListViewAdapter extends RecyclerView.Adapter<Mp4ListViewAdapter.
             tvLoadingHint = itemView.findViewById(R.id.tvloadinghint);
             tvImageName = itemView.findViewById(R.id.tvimageName);
             cardView = itemView.findViewById(R.id.cardview);
-            tvHint=itemView.findViewById(R.id.tvHint);
+            tvHint = itemView.findViewById(R.id.tvHint);
             frameLayout = (FrameLayout) itemView;
+            flvideowrapper = itemView.findViewById(R.id.flvideowrapper);
         }
+
     }
 
     public void setThumbnailMap(ArrayList<Pair<String, Bitmap>> thumbnailMap) {

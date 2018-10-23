@@ -69,6 +69,14 @@ JNIEXPORT jint JNICALL Java_zz_app_gif2mp4_Utils_gif2mp4
 JNIEXPORT jint JNICALL Java_zz_app_gif2mp4_Utils_mp42gif
   (JNIEnv *, jclass, jstring, jstring, jint, jint, jint, jint, jdouble, jdouble);
 
+/*
+ * Class:     zz_app_gif2mp4_Utils
+ * Method:    getMp4Size
+ * Signature: (Ljava/lang/String;)[I
+ */
+JNIEXPORT jintArray JNICALL Java_zz_app_gif2mp4_Utils_getMp4Size
+  (JNIEnv *, jclass, jstring);
+
 #ifdef __cplusplus
 }
 #endif

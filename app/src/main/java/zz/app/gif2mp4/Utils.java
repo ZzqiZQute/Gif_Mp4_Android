@@ -9,9 +9,8 @@ import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.util.Pair;
+import android.util.Size;
 import android.widget.Toast;
-
-import com.bumptech.glide.util.Util;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.DirectoryFileFilter;
@@ -23,10 +22,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.security.MessageDigest;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Locale;
 
-import zz.app.gif2mp4.activitys.ShowMp4Activity;
 import zz.app.gif2mp4.controllers.ActivityTransitionController;
 
 public class Utils {
@@ -93,7 +90,7 @@ public class Utils {
         files = new ArrayList<>(FileUtils.listFiles(Environment.getExternalStorageDirectory(), FileFilterUtils.suffixFileFilter(type), DirectoryFileFilter.INSTANCE));
         sortFiles(files, sortType, ascending);
         if (expecterror) {
-            if(type.equals("gif"))
+            if (type.equals("gif"))
                 files = exceptErrorGif(files);
         }
         return files;
@@ -190,10 +187,11 @@ public class Utils {
         }
         return true;
     }
+
     public static String getDir(String name) {
         File externalStorageDirectory = Environment.getExternalStorageDirectory();
         File dir = new File(externalStorageDirectory.getAbsoluteFile() + "/Gif_Mp4/" + name);
-        return dir.getAbsolutePath()+"/";
+        return dir.getAbsolutePath() + "/";
     }
 
     public static String bitrate2String(double bitrate) {
@@ -237,6 +235,7 @@ public class Utils {
         else
             return String.format(Locale.getDefault(), "%.3fMB", (float) (size) / 1000 / 1000);
     }
+
     public static void makeFolders(AppCompatActivity context) {
         boolean sdCardExist = Environment.getExternalStorageState().equals(android.os.Environment.MEDIA_MOUNTED);
         if (!sdCardExist) {
@@ -275,58 +274,65 @@ public class Utils {
 
     public static native int gif2mp4(String gifpath, String mp4path, int encodertypenum, double bitrate, double outputtime, int framecnt);
 
-    public static native int mp42gif(String mp4path,String gifpath,int fps,int rotate,int width,int height,double start,double end);
+    public static native int mp42gif(String mp4path, String gifpath, int fps, int rotate, int width, int height, double start, double end);
 
+    public static native int[] getMp4Size(String path);
 
     public static ArrayList<Pair<String, Bitmap>> getThumbnailMap(Context context, ArrayList<File> files) {
-        ArrayList<Pair<String, Bitmap>> ret=new ArrayList<>();
-        SharedPreferences preferences=context.getSharedPreferences("mp42gif",Context.MODE_PRIVATE);
-        MediaMetadataRetriever retriever=new MediaMetadataRetriever();
-        for(File f:files) {
-            String path=f.getAbsolutePath();
-            if(!preferences.contains(path)) {
+        ArrayList<Pair<String, Bitmap>> ret = new ArrayList<>();
+        SharedPreferences preferences = context.getSharedPreferences("mp42gif", Context.MODE_PRIVATE);
+        MediaMetadataRetriever retriever = new MediaMetadataRetriever();
+        for (File f : files) {
+            String path = f.getAbsolutePath();
+            if (!preferences.contains(path)) {
                 String md5 = Utils.MD5(path);
-                String output=getDir(".cache")+md5+".jpg";
-                File f2=new File(output);
-                if(!f2.exists()){
+                String output = getDir(".cache") + md5 + ".jpg";
+                File f2 = new File(output);
+                if (!f2.exists()) {
                     try {
-                        boolean b=f2.createNewFile();
+                        boolean b = f2.createNewFile();
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
-                    Log.d(TAG, "getThumbnailMap: path="+path);
+                    Log.d(TAG, "getThumbnailMap: path=" + path);
                     try {
                         retriever.setDataSource(path);
-                    }catch (RuntimeException ex){
+                    } catch (RuntimeException ex) {
                         continue;
                     }
-                    Bitmap bitmap=retriever.getFrameAtTime(0);
-                    if(bitmap!=null) {
+                    Bitmap bitmap = retriever.getFrameAtTime(0);
+                    if (bitmap != null) {
                         try {
                             FileOutputStream outputStream = new FileOutputStream(f2);
                             bitmap.compress(Bitmap.CompressFormat.JPEG, 80, outputStream);
-                            Bitmap bitmap1=BitmapFactory.decodeFile(output);
+                            Bitmap bitmap1 = BitmapFactory.decodeFile(output);
                             preferences.edit().putString(path, md5).apply();
                             ret.add(new Pair<>(path, bitmap1));
                         } catch (FileNotFoundException e) {
                             e.printStackTrace();
                         }
-                    }else{
+                    } else {
                         preferences.edit().putString(path, md5).apply();
-                        ret.add(new Pair<String,Bitmap>(path, null));
+                        ret.add(new Pair<String, Bitmap>(path, null));
                     }
-                }else{
+                } else {
                     preferences.edit().putString(path, md5).apply();
                     ret.add(new Pair<>(path, BitmapFactory.decodeFile(f2.getAbsolutePath())));
                 }
-            }else{
-                String md5=preferences.getString(path,"");
-                String output=getDir(".cache")+md5+".jpg";
-                Bitmap bitmap=BitmapFactory.decodeFile(output);
+            } else {
+                String md5 = preferences.getString(path, "");
+                String output = getDir(".cache") + md5 + ".jpg";
+                Bitmap bitmap = BitmapFactory.decodeFile(output);
                 ret.add(new Pair<>(path, bitmap));
             }
 
         }
         return ret;
     }
+
+    public static float dp2px(Context context, int i) {
+        return (context.getResources().getDisplayMetrics().density * i);
+    }
+
+
 }

@@ -46,7 +46,8 @@
             android:layout_height="match_parent"
             android:layout_above="@id/tvimageName"
             android:clickable="true"
-            android:focusable="true">
+            android:focusable="true"
+            android:id="@+id/flvideowrapper">
 
             <TextView
                 android:id="@+id/tvloadinghint"

@@ -8,6 +8,7 @@ import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
+import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -57,6 +58,7 @@ public class ShowGifActivity extends AppCompatActivity implements SwipeRefreshLa
                 switch (msg.what) {
                     case MSG_IMGOK:
                         adapter.setFiles(files);
+                        adapter.setReady(true);
                         adapter.notifyDataSetChanged();
                         swipeRefreshLayout.setRefreshing(false);
                         if (totop) {
@@ -89,7 +91,7 @@ public class ShowGifActivity extends AppCompatActivity implements SwipeRefreshLa
         swipeRefreshLayout.setColorSchemeColors(getColor(R.color.colorAccent));
         swipeRefreshLayout.setOnRefreshListener(this);
         giflistview = findViewById(R.id.giflistview);
-        giflistview.setLayoutManager(new GridLayoutManager(this, 2));
+        giflistview.setLayoutManager(new LinearLayoutManager(this));
         adapter = new GifListViewAdapter(this,handler, new ArrayList<File>());
         giflistview.setAdapter(adapter);
         freshimg();

@@ -1,6 +1,7 @@
 package zz.app.gif2mp4.controllers;
 
 
+import android.graphics.Bitmap;
 import android.support.v7.app.AppCompatActivity;
 
 import zz.app.gif2mp4.interfaces.IShowHide;
@@ -10,6 +11,7 @@ public class ActivityTransitionController {
     private AppCompatActivity to;
     private ShowListener showListener;
     private HideListener hideListener;
+    private Bitmap bitmap;
     public ActivityTransitionController(IShowHide from) {
         this.from=from;
     }
@@ -35,6 +37,15 @@ public class ActivityTransitionController {
             hideListener.onHide(from);
         }
     }
+
+    public Bitmap getBitmap() {
+        return bitmap;
+    }
+
+    public void setBitmap(Bitmap bitmap) {
+        this.bitmap = bitmap;
+    }
+
     public interface ShowListener{
         void onShow(IShowHide from);
     }

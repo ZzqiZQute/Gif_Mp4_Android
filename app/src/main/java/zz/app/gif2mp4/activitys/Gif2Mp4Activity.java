@@ -93,6 +93,7 @@ public class Gif2Mp4Activity extends AppCompatActivity {
                 winw = frame.right - frame.left;
                 anchor.getViewTreeObserver().removeOnGlobalLayoutListener(this);
                 ImageView imageView = new ImageView(Gif2Mp4Activity.this);
+                imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
                 imageView.setImageDrawable(new BitmapDrawable(null, b));
                 flselectpicwrapper.addView(imageView);
                 ValueAnimator animator = new ValueAnimator();
@@ -113,6 +114,7 @@ public class Gif2Mp4Activity extends AppCompatActivity {
                         params.width = w;
                         params.height = h;
                         view.setLayoutParams(params);
+                        view.invalidate();
                         mainlayout.setAlpha(v);
                     }
                 });
@@ -124,7 +126,7 @@ public class Gif2Mp4Activity extends AppCompatActivity {
 
                     @Override
                     public void onAnimationEnd(Animator animation) {
-                        flselectpicwrapper.setVisibility(View.INVISIBLE);
+
                         Utils.gif2mp4handler.hide();
                     }
 
@@ -144,9 +146,7 @@ public class Gif2Mp4Activity extends AppCompatActivity {
         });
         setContentView(anchor);
 
-        b = (Bitmap) getIntent().getParcelableExtra("bitmap");
-        imageView = new ImageView(this);
-        imageView.setImageDrawable(new BitmapDrawable(null, b));
+        b =Utils.gif2mp4handler.getBitmap();
         Point size = new Point();
         getWindowManager().getDefaultDisplay().getSize(size);
         w = size.x - 100;
@@ -164,8 +164,8 @@ public class Gif2Mp4Activity extends AppCompatActivity {
             picny = 0;
         } else {
             picnw = w;
-            picnh = picnw * pich / picw;
-            picnx = 0;
+            picnh = (w-100)*2/3;
+            picnx = 50;
             picny = (h - picnh) / 2;
         }
         init();
@@ -324,6 +324,7 @@ public class Gif2Mp4Activity extends AppCompatActivity {
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
+                flselectpicwrapper.setVisibility(View.INVISIBLE);
                 waitdialog.show();
                 WindowManager.LayoutParams params = Objects.requireNonNull(waitdialog.getWindow()).getAttributes();
                 Point size = new Point();
@@ -347,7 +348,7 @@ public class Gif2Mp4Activity extends AppCompatActivity {
                     }
                 }).start();
             }
-        }, 300);
+        }, 320);
         waitdialog = new AlertDialog.Builder(this).setView(View.inflate(this, R.layout.waitingreadgifframes, null)).setCancelable(false).create();
         Objects.requireNonNull(getSupportActionBar()).setElevation(0);
         listView = findViewById(R.id.g2mconfiglistview);

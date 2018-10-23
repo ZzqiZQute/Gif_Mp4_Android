@@ -711,3 +711,47 @@ FAIL:
   free( output );
   return GIF2MP4_UNKNOWN_ERROR;
 }
+JNIEXPORT jintArray JNICALL Java_zz_app_gif2mp4_Utils_getMp4Size
+  (JNIEnv *env, jclass cls, jstring path){
+
+    char		*input		= jstringToChar( env, path );
+    int ret[2];
+    AVFormatContext * inputFmtCtx	= avformat_alloc_context();
+    avformat_open_input( &inputFmtCtx, input, NULL, NULL );
+    avformat_find_stream_info( inputFmtCtx, NULL );
+    int	vsnb	= -1;
+    int	i	= 0, j = 0, k = 0;
+    float	sum	= 0;
+    int rotate=0;
+    for (; i < inputFmtCtx->nb_streams; i++ )
+    {
+      if ( inputFmtCtx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO )
+      {
+        vsnb = i;
+        break;
+      }
+    }
+    if ( vsnb != -1 )
+    {
+      AVDictionaryEntry *m = NULL;
+      if((m = av_dict_get(inputFmtCtx->streams[vsnb]->metadata, "rotate", m, AV_DICT_IGNORE_SUFFIX)) != NULL) {
+        rotate=atoi(m->value);
+      }
+      if(rotate==0||rotate==180)
+      {
+      ret[0]= inputFmtCtx->streams[vsnb]->codecpar->width;
+      ret[1]=inputFmtCtx->streams[vsnb]->codecpar->height;
+      }
+      else if(rotate==90||rotate==270||rotate==-90 )
+      {
+      ret[0]= inputFmtCtx->streams[vsnb]->codecpar->height;
+            ret[1]=inputFmtCtx->streams[vsnb]->codecpar->width;
+      }
+    }
+
+    free( input );
+    avformat_free_context( inputFmtCtx );
+    jintArray arr=(*env)->NewIntArray(env,2);
+    (*env)->SetIntArrayRegion(env,arr,0,2,ret);
+    return arr;
+  }
