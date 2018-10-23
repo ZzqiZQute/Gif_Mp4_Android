@@ -1,4 +1,4 @@
-package zz.app.gif2mp4;
+package zz.app.gif2mp4.activitys;
 
 import android.animation.Animator;
 import android.animation.ValueAnimator;
@@ -6,11 +6,9 @@ import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.DashPathEffect;
 import android.graphics.Paint;
 import android.graphics.Path;
-import android.graphics.PathDashPathEffect;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
@@ -25,7 +23,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
-import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
@@ -34,7 +31,6 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
-import android.widget.PopupWindow;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -44,6 +40,10 @@ import org.apache.commons.io.FileUtils;
 
 import java.io.File;
 import java.util.Objects;
+
+import zz.app.gif2mp4.adapters.G2MConfigAdapter;
+import zz.app.gif2mp4.R;
+import zz.app.gif2mp4.Utils;
 
 public class Gif2Mp4Activity extends AppCompatActivity {
     private static final int MSG_READGIFFRAMES = 0;
@@ -124,8 +124,8 @@ public class Gif2Mp4Activity extends AppCompatActivity {
 
                     @Override
                     public void onAnimationEnd(Animator animation) {
-
                         flselectpicwrapper.setVisibility(View.INVISIBLE);
+                        Utils.gif2mp4handler.hide();
                     }
 
                     @Override
@@ -187,6 +187,7 @@ public class Gif2Mp4Activity extends AppCompatActivity {
 
 
     private void init() {
+        Utils.gif2mp4handler.setTo(this);
         btnOutput = findViewById(R.id.btnoutput);
         btnWeixin = findViewById(R.id.btnweixin);
         btnOutput.setOnClickListener(new View.OnClickListener() {
@@ -399,6 +400,7 @@ public class Gif2Mp4Activity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
+        Utils.gif2mp4handler.show();
         flselectpicwrapper.setVisibility(View.VISIBLE);
         mainlayout.setVisibility(View.INVISIBLE);
         ValueAnimator animator = new ValueAnimator();

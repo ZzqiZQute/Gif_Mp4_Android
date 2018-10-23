@@ -5,4 +5,12 @@
     <string name="str_sort">排序</string>
     <string name="str_pleasewait">请稍后</string>
     <string name="str_converting">拼命转换中…</string>
+    <string-array name="sort_type">
+        <item>按时间降序</item>
+        <item>按时间升序</item>
+        <item>按大小降序</item>
+        <item>按大小升序</item>
+        <item>按名称降序</item>
+        <item>按名称升序</item>
+    </string-array>
 </resources>

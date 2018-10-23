@@ -1,21 +1,33 @@
 package zz.app.gif2mp4;
 
 import android.content.Context;
+import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.media.MediaMetadataRetriever;
 import android.os.Environment;
-import android.os.Handler;
-import android.os.Message;
-import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
+import android.util.Pair;
 import android.widget.Toast;
+
+import com.bumptech.glide.util.Util;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.DirectoryFileFilter;
 import org.apache.commons.io.filefilter.FileFilterUtils;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.security.MessageDigest;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Locale;
+
+import zz.app.gif2mp4.activitys.ShowMp4Activity;
+import zz.app.gif2mp4.controllers.ActivityTransitionController;
 
 public class Utils {
     static {
@@ -41,6 +53,9 @@ public class Utils {
     public static final int SUCCESSCODE = 233;
 
     private static final String TAG = "Utils";
+
+    public static ActivityTransitionController gif2mp4handler;
+
 
     public static int getProgress2() {
         return progress2;
@@ -73,12 +88,13 @@ public class Utils {
         return ret.toString();
     }
 
-    public static ArrayList<File> getFiles(String type, int sortType, boolean ascending, boolean excepterrorgif) {
+    public static ArrayList<File> getFiles(String type, int sortType, boolean ascending, boolean expecterror) {
         ArrayList<File> files;
-        files = new ArrayList<>(FileUtils.listFiles(Environment.getExternalStorageDirectory(), FileFilterUtils.suffixFileFilter("gif"), DirectoryFileFilter.INSTANCE));
+        files = new ArrayList<>(FileUtils.listFiles(Environment.getExternalStorageDirectory(), FileFilterUtils.suffixFileFilter(type), DirectoryFileFilter.INSTANCE));
         sortFiles(files, sortType, ascending);
-        if (excepterrorgif) {
-            files = exceptErrorGif(files);
+        if (expecterror) {
+            if(type.equals("gif"))
+                files = exceptErrorGif(files);
         }
         return files;
     }
@@ -166,13 +182,18 @@ public class Utils {
 
     public static boolean createDir(String name) {
         File externalStorageDirectory = Environment.getExternalStorageDirectory();
-        File gifdir = new File(externalStorageDirectory.getAbsoluteFile() + "/" + name);
-        if (!gifdir.exists()) {
-            boolean b = gifdir.mkdir();
+        File dir = new File(externalStorageDirectory.getAbsoluteFile() + "/" + name);
+        if (!dir.exists()) {
+            boolean b = dir.mkdir();
             if (!b)
                 return false;
         }
         return true;
+    }
+    public static String getDir(String name) {
+        File externalStorageDirectory = Environment.getExternalStorageDirectory();
+        File dir = new File(externalStorageDirectory.getAbsoluteFile() + "/Gif_Mp4/" + name);
+        return dir.getAbsolutePath()+"/";
     }
 
     public static String bitrate2String(double bitrate) {
@@ -237,6 +258,11 @@ public class Utils {
             Toast.makeText(context, "创建Gif_Mp4/Mp4目录失败?", Toast.LENGTH_SHORT).show();
             context.finish();
         }
+        if (!Utils.createDir("Gif_Mp4/.Cache")) //主目录
+        {
+            Toast.makeText(context, "创建Gif_Mp4/.Cache目录失败?", Toast.LENGTH_SHORT).show();
+            context.finish();
+        }
     }
 
     public static native void welcome();
@@ -252,4 +278,55 @@ public class Utils {
     public static native int mp42gif(String mp4path,String gifpath,int fps,int rotate,int width,int height,double start,double end);
 
 
+    public static ArrayList<Pair<String, Bitmap>> getThumbnailMap(Context context, ArrayList<File> files) {
+        ArrayList<Pair<String, Bitmap>> ret=new ArrayList<>();
+        SharedPreferences preferences=context.getSharedPreferences("mp42gif",Context.MODE_PRIVATE);
+        MediaMetadataRetriever retriever=new MediaMetadataRetriever();
+        for(File f:files) {
+            String path=f.getAbsolutePath();
+            if(!preferences.contains(path)) {
+                String md5 = Utils.MD5(path);
+                String output=getDir(".cache")+md5+".jpg";
+                File f2=new File(output);
+                if(!f2.exists()){
+                    try {
+                        boolean b=f2.createNewFile();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    Log.d(TAG, "getThumbnailMap: path="+path);
+                    try {
+                        retriever.setDataSource(path);
+                    }catch (RuntimeException ex){
+                        continue;
+                    }
+                    Bitmap bitmap=retriever.getFrameAtTime(0);
+                    if(bitmap!=null) {
+                        try {
+                            FileOutputStream outputStream = new FileOutputStream(f2);
+                            bitmap.compress(Bitmap.CompressFormat.JPEG, 80, outputStream);
+                            Bitmap bitmap1=BitmapFactory.decodeFile(output);
+                            preferences.edit().putString(path, md5).apply();
+                            ret.add(new Pair<>(path, bitmap1));
+                        } catch (FileNotFoundException e) {
+                            e.printStackTrace();
+                        }
+                    }else{
+                        preferences.edit().putString(path, md5).apply();
+                        ret.add(new Pair<String,Bitmap>(path, null));
+                    }
+                }else{
+                    preferences.edit().putString(path, md5).apply();
+                    ret.add(new Pair<>(path, BitmapFactory.decodeFile(f2.getAbsolutePath())));
+                }
+            }else{
+                String md5=preferences.getString(path,"");
+                String output=getDir(".cache")+md5+".jpg";
+                Bitmap bitmap=BitmapFactory.decodeFile(output);
+                ret.add(new Pair<>(path, bitmap));
+            }
+
+        }
+        return ret;
+    }
 }

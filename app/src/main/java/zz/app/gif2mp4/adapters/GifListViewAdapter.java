@@ -1,4 +1,4 @@
-package zz.app.gif2mp4;
+package zz.app.gif2mp4.adapters;
 
 import android.app.AlertDialog;
 import android.content.Context;
@@ -27,6 +27,13 @@ import java.io.File;
 import java.util.ArrayList;
 import android.os.Handler;
 
+import zz.app.gif2mp4.controllers.ActivityTransitionController;
+import zz.app.gif2mp4.interfaces.IShowHide;
+import zz.app.gif2mp4.R;
+import zz.app.gif2mp4.Utils;
+import zz.app.gif2mp4.activitys.Gif2Mp4Activity;
+import zz.app.gif2mp4.activitys.ShowGifActivity;
+
 
 public class GifListViewAdapter extends RecyclerView.Adapter<GifListViewAdapter.ViewHolder> {
 
@@ -35,7 +42,7 @@ public class GifListViewAdapter extends RecyclerView.Adapter<GifListViewAdapter.
     private Context context;
     private static final String TAG = "GifListViewAdapter";
 
-    GifListViewAdapter(Context context, Handler handler,ArrayList<File> files) {
+    public GifListViewAdapter(Context context, Handler handler, ArrayList<File> files) {
         this.files = files;
         this.context = context;
         this.handler=handler;
@@ -43,7 +50,7 @@ public class GifListViewAdapter extends RecyclerView.Adapter<GifListViewAdapter.
 
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup viewGroup, int i) {
-        View v = LayoutInflater.from(context).inflate(R.layout.layout_gif_file, viewGroup, false);
+        View v = LayoutInflater.from(context).inflate(R.layout.layout_img_file, viewGroup, false);
         return new ViewHolder(v);
     }
 
@@ -91,7 +98,19 @@ public class GifListViewAdapter extends RecyclerView.Adapter<GifListViewAdapter.
                         intent.putExtra("pich",h);
                          context.startActivity(intent);
                         ((ShowGifActivity)context).overridePendingTransition(0,0);
-
+                        Utils.gif2mp4handler=new ActivityTransitionController((ShowGifActivity)context);
+                        Utils.gif2mp4handler.setShowListener(new ActivityTransitionController.ShowListener() {
+                            @Override
+                            public void onShow(IShowHide from) {
+                                from.show();
+                            }
+                        });
+                        Utils.gif2mp4handler.setHideListener(new ActivityTransitionController.HideListener() {
+                            @Override
+                            public void onHide(IShowHide from) {
+                                from.hide();
+                            }
+                        });
                     }
                 } else {
                     Toast.makeText(activity, "加载Gif失败", Toast.LENGTH_SHORT).show();
@@ -108,7 +127,7 @@ public class GifListViewAdapter extends RecyclerView.Adapter<GifListViewAdapter.
                     public void onClick(DialogInterface dialogInterface, int i) {
                         boolean b = FileUtils.deleteQuietly(files.get(viewHolder.getPosition()));
                         ShowGifActivity activity = ((ShowGifActivity) context);
-                        activity.freshgif();
+                        activity.freshimg();
                     }
                 }).setNegativeButton("否", new DialogInterface.OnClickListener() {
                     @Override
@@ -142,9 +161,9 @@ public class GifListViewAdapter extends RecyclerView.Adapter<GifListViewAdapter.
 
         ViewHolder(View itemView) {
             super(itemView);
-            imageView = itemView.findViewById(R.id.gifview);
+            imageView = itemView.findViewById(R.id.imageView);
             tvLoadingHint = itemView.findViewById(R.id.tvloadinghint);
-            tvGifName = itemView.findViewById(R.id.tvgifname);
+            tvGifName = itemView.findViewById(R.id.tvimageName);
         }
     }
 }

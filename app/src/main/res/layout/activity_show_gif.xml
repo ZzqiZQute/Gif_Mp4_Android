@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<zz.app.gif2mp4.YellowTopFrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<zz.app.gif2mp4.layouts.YellowTopFrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:id="@+id/framelayout">
@@ -18,4 +18,4 @@
         </android.support.v7.widget.RecyclerView>
 
     </android.support.v4.widget.SwipeRefreshLayout>
-</zz.app.gif2mp4.YellowTopFrameLayout>
+</zz.app.gif2mp4.layouts.YellowTopFrameLayout>

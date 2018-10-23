@@ -14,7 +14,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         tools:ignore="GoogleAppIndexingWarning">
-        <activity android:name=".MainActivity">
+        <activity android:name=".activitys.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -22,24 +22,20 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".ShowGifActivity"
-            android:screenOrientation="portrait"
-            android:configChanges="keyboardHidden|orientation|screenSize">
-
-        </activity>
+            android:name=".activitys.ShowGifActivity"
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:screenOrientation="portrait"></activity>
         <activity
-            android:name=".Gif2Mp4Activity"
-            android:screenOrientation="portrait"
+            android:name=".activitys.Gif2Mp4Activity"
             android:configChanges="keyboardHidden|orientation|screenSize"
-            android:theme="@style/TranslucentWindow">
-
-        </activity>
-        <activity android:name=".TestActivity"
             android:screenOrientation="portrait"
+            android:theme="@style/TranslucentWindow"></activity>
+        <activity
+            android:name=".activitys.TestActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
-            android:theme="@style/TranslucentWindow">
-
-        </activity>
+            android:screenOrientation="portrait"
+            android:theme="@style/TranslucentWindow"></activity>
+        <activity android:name=".activitys.ShowMp4Activity"></activity>
     </application>
 
 </manifest>

@@ -1,10 +1,12 @@
-package zz.app.gif2mp4;
+package zz.app.gif2mp4.layouts;
 
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.util.AttributeSet;
 import android.widget.FrameLayout;
+
+import zz.app.gif2mp4.R;
 
 public class YellowTopFrameLayout extends FrameLayout {
     int a = 80;

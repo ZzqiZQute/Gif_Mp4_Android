@@ -1,4 +1,4 @@
-package zz.app.gif2mp4;
+package zz.app.gif2mp4.adapters;
 
 import android.app.AlertDialog;
 import android.content.Context;
@@ -16,10 +16,8 @@ import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
-import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.PopupWindow;
 import android.widget.RadioButton;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -34,6 +32,10 @@ import java.io.File;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Locale;
+
+import zz.app.gif2mp4.R;
+import zz.app.gif2mp4.Utils;
+import zz.app.gif2mp4.activitys.Gif2Mp4Activity;
 
 import static android.content.Context.MODE_PRIVATE;
 

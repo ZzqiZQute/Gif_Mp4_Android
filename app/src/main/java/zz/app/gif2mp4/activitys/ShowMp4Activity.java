@@ -1,76 +1,81 @@
-package zz.app.gif2mp4;
+package zz.app.gif2mp4.activitys;
 
 import android.content.SharedPreferences;
-import android.os.Bundle;
-import android.os.Environment;
+import android.graphics.Bitmap;
 import android.os.Handler;
 import android.os.Message;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.os.Bundle;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Pair;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
-import android.widget.Toast;
+
+import com.bumptech.glide.util.Util;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Dictionary;
+import java.util.HashMap;
 import java.util.Objects;
 
-public class ShowGifActivity extends AppCompatActivity implements SwipeRefreshLayout.OnRefreshListener {
-    RecyclerView giflistview;
+import zz.app.gif2mp4.R;
+import zz.app.gif2mp4.Utils;
+import zz.app.gif2mp4.adapters.Mp4ListViewAdapter;
+import zz.app.gif2mp4.interfaces.IShowHide;
+
+public class ShowMp4Activity extends AppCompatActivity implements SwipeRefreshLayout.OnRefreshListener, IShowHide {
     ArrayList<File> files;
+    ArrayList<Pair<String, Bitmap>> thumbnailMap;
     SwipeRefreshLayout swipeRefreshLayout;
-    GifListViewAdapter adapter;
+    Mp4ListViewAdapter adapter;
+    boolean totop = false;
+    private static final int MSG_IMGOK = 0;
+    private static final int MSG_CLOSE_SORTVIEW = 1;
     AlertDialog sortdialog;
-    final String Magic = "gif";
-    private static final int MSG_GIFOK = 0;
-    private static final int MSG_CLOSE_GIFSORTVIEW = 1;
+    Handler handler;
+    String[] sortmethod;
+    RecyclerView mp4ListView;
+    final String Magic = "mp4";
     int sorttype;
     boolean ascending;
-    boolean totop = false;
-    YellowTopFrameLayout yellowTopFrameLayout;
-    Handler handler;
-    String[] sortmethod = new String[]{
-            "按时间降序",
-            "按时间升序",
-            "按大小降序",
-            "按大小升序",
-            "按名称降序",
-            "按名称升序",
-    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_show_gif);
+        setContentView(R.layout.activity_show_mp4);
         init();
+
     }
 
     private void init() {
-        yellowTopFrameLayout =findViewById(R.id.framelayout);
-
-        initCreate();
-        setTitle("选择Gif图片");
+        sortmethod = getResources().getStringArray(R.array.sort_type);
+        setTitle("选择Mp4视频");
+        Objects.requireNonNull(getSupportActionBar()).setElevation(0);
         handler = new Handler(new Handler.Callback() {
             @Override
             public boolean handleMessage(Message msg) {
                 switch (msg.what) {
-                    case MSG_GIFOK:
+                    case MSG_IMGOK:
                         adapter.setFiles(files);
+                        adapter.setThumbnailMap(thumbnailMap);
+                        adapter.setReady(true);
                         adapter.notifyDataSetChanged();
+
                         swipeRefreshLayout.setRefreshing(false);
                         if (totop) {
                             totop = false;
-                            giflistview.smoothScrollToPosition(0);
+                            mp4ListView.smoothScrollToPosition(0);
                         }
                         break;
-                    case MSG_CLOSE_GIFSORTVIEW:
+                    case MSG_CLOSE_SORTVIEW:
                         if (sortdialog != null)
                             sortdialog.dismiss();
                         break;
@@ -82,45 +87,44 @@ public class ShowGifActivity extends AppCompatActivity implements SwipeRefreshLa
         initView();
     }
 
-    private void readSettings() {
-        SharedPreferences preferences = getSharedPreferences("gif2mp4", MODE_PRIVATE);
-        sorttype = preferences.getInt("sorttype", 0);
-        ascending = preferences.getBoolean("ascending", false);
+    private void initView() {
+
+        swipeRefreshLayout = findViewById(R.id.mp4srl);
+        swipeRefreshLayout.setColorSchemeColors(getColor(R.color.colorAccent));
+        swipeRefreshLayout.setOnRefreshListener(this);
+        mp4ListView = findViewById(R.id.mp4listview);
+        mp4ListView.setLayoutManager(new GridLayoutManager(this, 1));
+        adapter = new Mp4ListViewAdapter(this, handler, new ArrayList<File>(), new ArrayList<Pair<String, Bitmap>>());
+        mp4ListView.setAdapter(adapter);
+        freshimg();
 
     }
 
-    private void initView() {
-        Objects.requireNonNull(getSupportActionBar()).setElevation(0);
-        swipeRefreshLayout = findViewById(R.id.gifsrl);
-        swipeRefreshLayout.setColorSchemeColors(getColor(R.color.colorAccent));
-        swipeRefreshLayout.setOnRefreshListener(this);
-        giflistview = findViewById(R.id.giflistview);
-        giflistview.setLayoutManager(new GridLayoutManager(this, 2));
-        adapter = new GifListViewAdapter(this,handler, new ArrayList<File>());
-        giflistview.setAdapter(adapter);
-        freshgif();
+    @Override
+    public void show() {
+
+    }
+
+    @Override
+    public void hide() {
+
     }
 
     @Override
     public void onRefresh() {
-        freshgif();
+        freshimg();
     }
 
-    public void freshgif() {
+    public void freshimg() {
         swipeRefreshLayout.setRefreshing(true);
         new Thread(new Runnable() {
             @Override
             public void run() {
                 files = Utils.getFiles(Magic, sorttype, ascending, true);
-                handler.obtainMessage(MSG_GIFOK).sendToTarget();
+                thumbnailMap=Utils.getThumbnailMap(ShowMp4Activity.this,files);
+                handler.obtainMessage(MSG_IMGOK).sendToTarget();
             }
         }).start();
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.showgifmenu, menu);
-        return super.onCreateOptionsMenu(menu);
     }
 
     @Override
@@ -128,9 +132,9 @@ public class ShowGifActivity extends AppCompatActivity implements SwipeRefreshLa
         switch (item.getItemId()) {
             case R.id.menusort:
                 final AlertDialog.Builder builder = new AlertDialog.Builder(this);
-                View v = View.inflate(ShowGifActivity.this, R.layout.gifsortlistview, null);
+                View v = View.inflate(ShowMp4Activity.this, R.layout.gifsortlistview, null);
                 ListView lv = v.findViewById(R.id.gifsort_listview);
-                lv.setAdapter(new ArrayAdapter<>(ShowGifActivity.this, R.layout.gifsortlistadapterview, sortmethod));
+                lv.setAdapter(new ArrayAdapter<>(ShowMp4Activity.this, R.layout.sortlistview, sortmethod));
                 lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                     @Override
                     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -160,12 +164,12 @@ public class ShowGifActivity extends AppCompatActivity implements SwipeRefreshLa
                                 ascending = true;
                                 break;
                         }
-                        SharedPreferences preferences = getSharedPreferences("gif2mp4", MODE_PRIVATE);
+                        SharedPreferences preferences = getSharedPreferences("mp42gif", MODE_PRIVATE);
                         preferences.edit().putInt("sorttype", sorttype).putBoolean("ascending", ascending).apply();
-                        handler.obtainMessage(MSG_CLOSE_GIFSORTVIEW).sendToTarget();
+                        handler.obtainMessage(MSG_CLOSE_SORTVIEW).sendToTarget();
                         swipeRefreshLayout.setRefreshing(true);
                         totop = true;
-                        freshgif();
+                        freshimg();
                     }
 
                 });
@@ -176,36 +180,17 @@ public class ShowGifActivity extends AppCompatActivity implements SwipeRefreshLa
         return super.onOptionsItemSelected(item);
     }
 
-
-    private void initCreate() {
-        Utils.welcome();
-        boolean sdCardExist = Environment.getExternalStorageState().equals(android.os.Environment.MEDIA_MOUNTED);
-        if (!sdCardExist) {
-            Toast.makeText(this, "请检查SD卡?", Toast.LENGTH_SHORT).show();
-            finish();
-        }
-        if (!Utils.createDir("Gif_Mp4")) //主目录
-        {
-            Toast.makeText(this, "创建Gif_Mp4目录失败?", Toast.LENGTH_SHORT).show();
-            finish();
-        }
-        if (!Utils.createDir("Gif_Mp4/Gif")) //主目录
-        {
-            Toast.makeText(this, "创建Gif_Mp4/Gif目录失败?", Toast.LENGTH_SHORT).show();
-            finish();
-        }
-        if (!Utils.createDir("Gif_Mp4/Mp4")) //主目录
-        {
-            Toast.makeText(this, "创建Gif_Mp4/Mp4目录失败?", Toast.LENGTH_SHORT).show();
-            finish();
-        }
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.showimgmenu, menu);
+        return super.onCreateOptionsMenu(menu);
     }
 
-    public void hide() {
-        swipeRefreshLayout.setVisibility(View.INVISIBLE);
+    private void readSettings() {
+        SharedPreferences preferences = getSharedPreferences("mp42gif", MODE_PRIVATE);
+        sorttype = preferences.getInt("sorttype", 0);
+        ascending = preferences.getBoolean("ascending", false);
+
     }
 
-    public void show() {
-        swipeRefreshLayout.setVisibility(View.VISIBLE);
-    }
 }

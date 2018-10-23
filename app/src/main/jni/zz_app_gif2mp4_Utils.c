@@ -480,7 +480,7 @@ JNIEXPORT jint JNICALL Java_zz_app_gif2mp4_Utils_mp42gif
   AVRational video_time_base = video_stream->time_base;
   if(_start==-1)start_=0;
   else start_=_start;
-  if(_end==-1)end_=video_stream->nb_frames*av_q2d(video_time_base);
+  if(_end==-1)end_=video_stream->nb_frames/av_q2d(video_time_base);
   else end_=_end;
   AVDictionaryEntry *m = NULL;
   if((m = av_dict_get(video_stream->metadata, "rotate", m, AV_DICT_IGNORE_SUFFIX)) != NULL) {
