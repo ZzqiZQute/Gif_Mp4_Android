@@ -2,30 +2,25 @@ package zz.app.gif2mp4.activitys;
 
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
+import android.media.MediaPlayer;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
-import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Pair;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
-import com.bumptech.glide.util.Util;
-
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Dictionary;
-import java.util.HashMap;
 import java.util.Objects;
 
 import zz.app.gif2mp4.R;
@@ -107,6 +102,8 @@ public class ShowMp4Activity extends AppCompatActivity implements SwipeRefreshLa
                     case RecyclerView.SCROLL_STATE_DRAGGING:
                         break;
                     case RecyclerView.SCROLL_STATE_IDLE:
+                        MediaPlayer player = adapter.getMediaPlayer();
+                        if (player != null) player.release();
                         final LinearLayoutManager manager = (LinearLayoutManager) recyclerView.getLayoutManager();
                         handler.postDelayed(new Runnable() {
                             @Override

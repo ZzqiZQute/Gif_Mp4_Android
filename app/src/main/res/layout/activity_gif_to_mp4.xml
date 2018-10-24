@@ -2,12 +2,6 @@
 <zz.app.gif2mp4.layouts.YellowTopFrameLayout xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent" android:layout_height="match_parent"
     xmlns:android="http://schemas.android.com/apk/res/android">
-    <FrameLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:id="@+id/flselectpicwrapper">
-
-    </FrameLayout>
     <RelativeLayout
         android:id="@+id/mainlayout"
         android:visibility="invisible"
@@ -78,4 +72,9 @@
 
 </RelativeLayout>
 
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/llselectpicwrapper"></LinearLayout>
 </zz.app.gif2mp4.layouts.YellowTopFrameLayout>

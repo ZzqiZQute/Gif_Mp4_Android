@@ -3,6 +3,7 @@ package zz.app.gif2mp4.adapters;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.graphics.Point;
 import android.graphics.SurfaceTexture;
@@ -19,6 +20,7 @@ import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -41,6 +43,12 @@ public class Mp4ListViewAdapter extends RecyclerView.Adapter<Mp4ListViewAdapter.
     private ArrayList<Pair<String, Bitmap>> thumbnailMap;
     private ArrayList<String> showfiles;
     private Context context;
+
+    public MediaPlayer getMediaPlayer() {
+        return mediaPlayer;
+    }
+
+    private MediaPlayer mediaPlayer;
     private static final String TAG = "Mp4ListViewAdapter";
 
     public int getPlayindex() {
@@ -90,6 +98,8 @@ public class Mp4ListViewAdapter extends RecyclerView.Adapter<Mp4ListViewAdapter.
     @Override
     public void onBindViewHolder(final ViewHolder viewHolder, int i) {
         if (i > 0 && i < showfiles.size() + 1) {
+            viewHolder.baudio = false;
+            viewHolder.btnAudio.setImageDrawable(new BitmapDrawable(context.getResources(), BitmapFactory.decodeResource(context.getResources(), R.drawable.audiooff)));
             final float start = viewHolder.cardView.getCardElevation();
             viewHolder.tvHint.setVisibility(View.INVISIBLE);
             ViewGroup.LayoutParams params = viewHolder.cardView.getLayoutParams();
@@ -101,13 +111,16 @@ public class Mp4ListViewAdapter extends RecyclerView.Adapter<Mp4ListViewAdapter.
             final ImageView imgView = viewHolder.imageView;
             viewHolder.tvImageName.setVisibility(View.GONE);
             viewHolder.tvImageName.setSelected(true);
+            ViewGroup.LayoutParams params1 = viewHolder.imageView.getLayoutParams();
+            params1.width = size.x * 3 / 4;
+            viewHolder.imageView.setLayoutParams(params1);
             final String path = showfiles.get(i - 1);
             File file = new File(path);
             String name = file.getName();
             viewHolder.tvImageName.setText(name);
             Bitmap bitmap = findThumbnailMap(path).second;
             if (bitmap != null) {
-                imgView.setImageDrawable(new BitmapDrawable(null, bitmap));
+                imgView.setImageDrawable(new BitmapDrawable(context.getResources(), bitmap));
             } else {
                 imgView.setImageDrawable(context.getDrawable(R.drawable.resourceerr));
             }
@@ -134,12 +147,38 @@ public class Mp4ListViewAdapter extends RecyclerView.Adapter<Mp4ListViewAdapter.
             if (viewHolder.flvideowrapper.getChildCount() == 3) {
                 LinearLayout layout = (LinearLayout) viewHolder.flvideowrapper.getChildAt(1);
                 TextureView textureView = (TextureView) layout.getChildAt(0);
+                if (mediaPlayer != null)
+                    mediaPlayer.release();
+                mediaPlayer = null;
                 layout.removeAllViews();
                 viewHolder.flvideowrapper.removeViewAt(1);
 
             }
-
+            viewHolder.btnAudio.setVisibility(View.INVISIBLE);
+            viewHolder.btnAudio.setOnClickListener(null);
             if (playindex == i - 1) {
+                viewHolder.btnAudio.setVisibility(View.VISIBLE);
+                viewHolder.btnAudio.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        if (mediaPlayer != null) {
+                            try {
+                                if (!viewHolder.baudio) {
+                                    viewHolder.baudio = true;
+                                    mediaPlayer.setVolume(1, 1);
+                                    viewHolder.btnAudio.setImageDrawable(new BitmapDrawable(context.getResources(), BitmapFactory.decodeResource(context.getResources(), R.drawable.audioon)));
+                                } else {
+                                    viewHolder.baudio = false;
+                                    mediaPlayer.setVolume(0, 0);
+                                    viewHolder.btnAudio.setImageDrawable(new BitmapDrawable(context.getResources(), BitmapFactory.decodeResource(context.getResources(), R.drawable.audiooff)));
+
+                                }
+                            } catch (Exception ignored) {
+
+                            }
+                        }
+                    }
+                });
                 final LinearLayout layout = new LinearLayout(context);
                 layout.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT));
                 layout.setGravity(Gravity.CENTER);
@@ -147,7 +186,7 @@ public class Mp4ListViewAdapter extends RecyclerView.Adapter<Mp4ListViewAdapter.
                 textureView.setSurfaceTextureListener(new TextureView.SurfaceTextureListener() {
                     @Override
                     public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
-                        MediaPlayer mediaPlayer = new MediaPlayer();
+                        mediaPlayer = new MediaPlayer();
                         mediaPlayer.setSurface(new Surface(surface));
                         try {
                             mediaPlayer.setDataSource(path);
@@ -184,11 +223,12 @@ public class Mp4ListViewAdapter extends RecyclerView.Adapter<Mp4ListViewAdapter.
                 ViewGroup.MarginLayoutParams layoutParams = new ViewGroup.MarginLayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT);
                 int margin = (int) Utils.dp2px(context, 5);
                 layoutParams.setMargins(margin, margin, margin, margin);
+                layoutParams.width = size.x * 3 / 4;
                 textureView.setLayoutParams(layoutParams);
                 int[] mp4Size = Utils.getMp4Size(path);
                 int width = mp4Size[0];
                 int height = mp4Size[1];
-                float twidth = size.x - 2 * Utils.dp2px(context, 20);
+                float twidth = size.x * 3 / 4;
                 float theight = (size.x) * 3 / 4 - 2 * Utils.dp2px(context, 5);
                 float rx;
                 float ry;
@@ -294,6 +334,8 @@ public class Mp4ListViewAdapter extends RecyclerView.Adapter<Mp4ListViewAdapter.
         FrameLayout flvideowrapper;
         CardView cardView;
         TextView tvHint;
+        ImageButton btnAudio;
+        Boolean baudio;
 
         ViewHolder(View itemView) {
             super(itemView);
@@ -304,6 +346,8 @@ public class Mp4ListViewAdapter extends RecyclerView.Adapter<Mp4ListViewAdapter.
             tvHint = itemView.findViewById(R.id.tvHint);
             frameLayout = (FrameLayout) itemView;
             flvideowrapper = itemView.findViewById(R.id.flvideowrapper);
+            btnAudio = itemView.findViewById(R.id.btnaudio);
+            baudio = false;
         }
 
     }

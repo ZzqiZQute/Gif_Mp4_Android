@@ -109,9 +109,9 @@ public class TestActivity extends AppCompatActivity {
 
         setTitle("测试页");
         Objects.requireNonNull(getSupportActionBar()).setElevation(0);
-        Bitmap b = (Bitmap) getIntent().getParcelableExtra("bitmap");
+        Bitmap b = getIntent().getParcelableExtra("bitmap");
         imageView = new ImageView(this);
-        imageView.setImageDrawable(new BitmapDrawable(null, b));
+        imageView.setImageDrawable(new BitmapDrawable(getResources(), b));
         Point size = new Point();
         getWindowManager().getDefaultDisplay().getSize(size);
         w = size.x - 100;

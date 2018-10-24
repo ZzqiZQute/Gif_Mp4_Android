@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Point;
+import android.os.Handler;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -28,15 +29,13 @@ import org.apache.commons.io.FileUtils;
 
 import java.io.File;
 import java.util.ArrayList;
-import android.os.Handler;
 
-import zz.app.gif2mp4.activitys.ShowMp4Activity;
-import zz.app.gif2mp4.controllers.ActivityTransitionController;
-import zz.app.gif2mp4.interfaces.IShowHide;
 import zz.app.gif2mp4.R;
 import zz.app.gif2mp4.Utils;
 import zz.app.gif2mp4.activitys.Gif2Mp4Activity;
 import zz.app.gif2mp4.activitys.ShowGifActivity;
+import zz.app.gif2mp4.controllers.ActivityTransitionController;
+import zz.app.gif2mp4.interfaces.IShowHide;
 
 
 public class GifListViewAdapter extends RecyclerView.Adapter<GifListViewAdapter.ViewHolder> {
@@ -130,12 +129,13 @@ public class GifListViewAdapter extends RecyclerView.Adapter<GifListViewAdapter.
                             Canvas canvas = new Canvas(bitmap);
                             gifView.draw(canvas);
                             Utils.gif2mp4handler.setBitmap(bitmap);
-                            int[] location = new int[2];
-                            gifView.getLocationOnScreen(location);
-                            intent.putExtra("picx", location[0]);
-                            intent.putExtra("picy", location[1]);
-                            intent.putExtra("picw", w);
-                            intent.putExtra("pich", h);
+                            int[] pos = new int[2];
+                            gifView.getLocationInWindow(pos);
+                            intent.putExtra("picy", pos[1]);
+                            int width = gifView.getDrawable().getIntrinsicWidth();
+                            int height = gifView.getDrawable().getIntrinsicHeight();
+                            intent.putExtra("width", width);
+                            intent.putExtra("height", height);
                             context.startActivity(intent);
                             ((ShowGifActivity) context).overridePendingTransition(0, 0);
                         }

@@ -29,8 +29,7 @@ import android.view.ViewTreeObserver;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
-import android.widget.FrameLayout;
-import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -41,9 +40,10 @@ import org.apache.commons.io.FileUtils;
 import java.io.File;
 import java.util.Objects;
 
-import zz.app.gif2mp4.adapters.G2MConfigAdapter;
 import zz.app.gif2mp4.R;
 import zz.app.gif2mp4.Utils;
+import zz.app.gif2mp4.adapters.G2MConfigAdapter;
+import zz.app.gif2mp4.views.ScaleImgView;
 
 public class Gif2Mp4Activity extends AppCompatActivity {
     private static final int MSG_READGIFFRAMES = 0;
@@ -65,57 +65,66 @@ public class Gif2Mp4Activity extends AppCompatActivity {
     TextView tvConvertProgress;
     int progress;
     int lastprogress;
-    ImageView imageView, imageView2;
+    ScaleImgView imageView;
     int w, h, x, y, picw, pich, picx, picy, picnx, picny, picnw, picnh, winx, winy, winh, winw;
     View anchor;
     MediaScannerConnection connection;
     private static final String TAG = "Gif2Mp4Activity";
     int scrolly = 0;
     Bitmap b;
-    FrameLayout flselectpicwrapper;
+    LinearLayout llselectpicwrapper;
     RelativeLayout mainlayout;
-
+    private int lrmargin;
+    private int lrnmargin;
+    private int tnmargin;
+    private int tmargin;
+    private ValueAnimator animator;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
         anchor = View.inflate(this, R.layout.activity_gif_to_mp4, null);
         anchor.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+
+
             @Override
             public void onGlobalLayout() {
-                Rect frame = new Rect();
-                getWindow().getDecorView().getWindowVisibleDisplayFrame(frame);
-                int statusBarHeight = frame.top;
-                int titleBarHeight = getWindow().findViewById(Window.ID_ANDROID_CONTENT).getTop();
-                winx = 0;
-                winy = titleBarHeight + statusBarHeight;
-                winh = frame.bottom - winy;
-                winw = frame.right - frame.left;
+                Point size = new Point();
+                getWindowManager().getDefaultDisplay().getSize(size);
+                picnw = size.x - 120;
+                picnh = size.x * 2 / 3;
+                picw = size.x * 3 / 4;
+                pich = size.x * 3 / 4;
+                lrmargin = (size.x - picw) / 2;
+                lrnmargin = 60;
+                w = getIntent().getIntExtra("width", 0);
+                h = getIntent().getIntExtra("height", 0);
+                picy = getIntent().getIntExtra("picy", 0);
+                int titlebarheight = getWindow().findViewById(Window.ID_ANDROID_CONTENT).getTop();
+                Rect rect = new Rect();
+                getWindow().getDecorView().getWindowVisibleDisplayFrame(rect);
+                tmargin = picy - titlebarheight - rect.top;
+                tnmargin = 0;
                 anchor.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-                ImageView imageView = new ImageView(Gif2Mp4Activity.this);
-                imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
-                imageView.setImageDrawable(new BitmapDrawable(null, b));
-                flselectpicwrapper.addView(imageView);
-                ValueAnimator animator = new ValueAnimator();
+                imageView = new ScaleImgView(Gif2Mp4Activity.this, w, h);
+                llselectpicwrapper.addView(imageView);
+                animator = new ValueAnimator();
                 animator.setDuration(300);
                 animator.setFloatValues(0, 1);
                 animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
                     @Override
                     public void onAnimationUpdate(ValueAnimator animation) {
-                        ImageView view = (ImageView) flselectpicwrapper.getChildAt(0);
                         float v = (float) animation.getAnimatedValue();
-                        int x = (int) (picx + (picnx - picx) * v);
-                        int y = (int) (picy - winy + (picny - picy + winy) * v);
-                        int w = (int) (picw + (picnw - picw) * v);
-                        int h = (int) (pich + (picnh - pich) * v);
-                        ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) view.getLayoutParams();
-                        params.leftMargin = x;
-                        params.topMargin = y;
-                        params.width = w;
-                        params.height = h;
-                        view.setLayoutParams(params);
-                        view.invalidate();
+                        ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) imageView.getLayoutParams();
+                        params.leftMargin = (int) (lrmargin + (lrnmargin - lrmargin) * v);
+                        params.rightMargin = (int) (lrmargin + (lrnmargin - lrmargin) * v);
+                        params.topMargin = (int) (tmargin + (tnmargin - tmargin) * v);
+                        params.width = (int) (picw + (picnw - picw) * v);
+                        params.height = (int) (pich + (picnh - pich) * v);
+                        imageView.setLayoutParams(params);
                         mainlayout.setAlpha(v);
+                        imageView.setDrawable(new BitmapDrawable(getResources(), b));
+                        imageView.invalidate();
                     }
                 });
                 animator.addListener(new Animator.AnimatorListener() {
@@ -146,28 +155,8 @@ public class Gif2Mp4Activity extends AppCompatActivity {
         });
         setContentView(anchor);
 
-        b =Utils.gif2mp4handler.getBitmap();
-        Point size = new Point();
-        getWindowManager().getDefaultDisplay().getSize(size);
-        w = size.x - 100;
-        h = size.x * 2 / 3;
-        picw = getIntent().getIntExtra("picw", 0);
-        pich = getIntent().getIntExtra("pich", 0);
-        picx = getIntent().getIntExtra("picx", 0);
-        picy = getIntent().getIntExtra("picy", 0);
-        x = 50;
-        y = 0;
-        if (pich * w > picw * h) {
-            picnh = h;
-            picnw = picnh * picw / pich;
-            picnx = (w - picnw + 100) / 2;
-            picny = 0;
-        } else {
-            picnw = w;
-            picnh = (w-100)*2/3;
-            picnx = 50;
-            picny = (h - picnh) / 2;
-        }
+        b = Utils.gif2mp4handler.getBitmap();
+
         init();
         listView.setOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
@@ -279,8 +268,14 @@ public class Gif2Mp4Activity extends AppCompatActivity {
                         adapter.setGifOptions(gifOptions.frames, gifOptions.rate);
                         adapter.notifyItemChanged(1);
                         adapter.notifyItemChanged(4);
-                        if (waitdialog != null && waitdialog.isShowing()) {
-                            waitdialog.dismiss();
+                        try {
+                            if (waitdialog != null && waitdialog.isShowing()) {
+                                waitdialog.dismiss();
+                            }
+                        } catch (IllegalArgumentException ignored) {
+
+                        } finally {
+                            waitdialog = null;
                         }
                         break;
                     case MSG_CONVERTFINISH:
@@ -324,16 +319,24 @@ public class Gif2Mp4Activity extends AppCompatActivity {
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                flselectpicwrapper.setVisibility(View.INVISIBLE);
-                waitdialog.show();
-                WindowManager.LayoutParams params = Objects.requireNonNull(waitdialog.getWindow()).getAttributes();
-                Point size = new Point();
-                Gif2Mp4Activity.this.getWindow().getWindowManager().getDefaultDisplay().getSize(size);
-                int x = Math.min(size.x, size.y);
-                params.width = x / 2;
-                params.height = x / 2;
-                params.dimAmount = 0.5f;
-                waitdialog.getWindow().setAttributes(params);
+                llselectpicwrapper.setVisibility(View.INVISIBLE);
+                try {
+                    if (waitdialog != null) {
+                        waitdialog.show();
+                        WindowManager.LayoutParams params = Objects.requireNonNull(waitdialog.getWindow()).getAttributes();
+                        Point size = new Point();
+                        Gif2Mp4Activity.this.getWindow().getWindowManager().getDefaultDisplay().getSize(size);
+                        int x = Math.min(size.x, size.y);
+                        params.width = x / 2;
+                        params.height = x / 2;
+                        params.dimAmount = 0.5f;
+                        waitdialog.getWindow().setAttributes(params);
+
+                    }
+                } catch (Exception ignored) {
+
+                }
+
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
@@ -387,7 +390,7 @@ public class Gif2Mp4Activity extends AppCompatActivity {
         SharedPreferences preferences = getSharedPreferences("gif2mp4", MODE_PRIVATE);
         adapter.setBitrate(preferences.getInt("defaultbitrate", 500 * 1000));
         listView.setAdapter(adapter);
-        flselectpicwrapper = findViewById(R.id.flselectpicwrapper);
+        llselectpicwrapper = findViewById(R.id.llselectpicwrapper);
         mainlayout = findViewById(R.id.mainlayout);
         mainlayout.setVisibility(View.VISIBLE);
 
@@ -401,8 +404,13 @@ public class Gif2Mp4Activity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
+        waitdialog = null;
+        if (this.animator != null) {
+            this.animator.cancel();
+            this.animator = null;
+        }
         Utils.gif2mp4handler.show();
-        flselectpicwrapper.setVisibility(View.VISIBLE);
+        llselectpicwrapper.setVisibility(View.VISIBLE);
         mainlayout.setVisibility(View.INVISIBLE);
         ValueAnimator animator = new ValueAnimator();
         animator.setDuration(300);
@@ -410,18 +418,16 @@ public class Gif2Mp4Activity extends AppCompatActivity {
         animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
-                ImageView view = (ImageView) flselectpicwrapper.getChildAt(0);
                 float v = (float) animation.getAnimatedValue();
-                int x = (int) (picx + (picnx - picx) * v);
-                int y = (int) (picy - winy + (picny - picy + winy) * v);
-                int w = (int) (picw + (picnw - picw) * v);
-                int h = (int) (pich + (picnh - pich) * v);
-                ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) view.getLayoutParams();
-                params.leftMargin = x;
-                params.topMargin = y;
-                params.width = w;
-                params.height = h;
-                view.setLayoutParams(params);
+                ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) imageView.getLayoutParams();
+                params.leftMargin = (int) (lrmargin + (lrnmargin - lrmargin) * v);
+                params.rightMargin = (int) (lrmargin + (lrnmargin - lrmargin) * v);
+                params.topMargin = (int) (tmargin + (tnmargin - tmargin) * v);
+                params.width = (int) (picw + (picnw - picw) * v);
+                params.height = (int) (pich + (picnh - pich) * v);
+                imageView.setLayoutParams(params);
+                mainlayout.setAlpha(v);
+                imageView.invalidate();
                 WindowManager.LayoutParams attr = getWindow().getAttributes();
                 attr.alpha = v;
                 getWindow().setAttributes(attr);
@@ -451,6 +457,7 @@ public class Gif2Mp4Activity extends AppCompatActivity {
         });
         animator.start();
 
+
     }
 
 
@@ -463,4 +470,5 @@ public class Gif2Mp4Activity extends AppCompatActivity {
             this.rate = rate;
         }
     }
+
 }
