@@ -228,4 +228,13 @@ public class ShowMp4Activity extends AppCompatActivity implements SwipeRefreshLa
 
     }
 
+    @Override
+    public void onBackPressed() {
+        MediaPlayer player=adapter.getMediaPlayer();
+        if(player!=null){
+            player.release();
+            player=null;
+        }
+        super.onBackPressed();
+    }
 }
