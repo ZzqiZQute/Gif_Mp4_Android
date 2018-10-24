@@ -9,7 +9,6 @@ import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.util.Pair;
-import android.util.Size;
 import android.widget.Toast;
 
 import org.apache.commons.io.FileUtils;
@@ -88,11 +87,10 @@ public class Utils {
     public static ArrayList<File> getFiles(String type, int sortType, boolean ascending, boolean expecterror) {
         ArrayList<File> files;
         files = new ArrayList<>(FileUtils.listFiles(Environment.getExternalStorageDirectory(), FileFilterUtils.suffixFileFilter(type), DirectoryFileFilter.INSTANCE));
+        Log.d(TAG, "getFiles: size="+files.size());
         sortFiles(files, sortType, ascending);
-        if (expecterror) {
-            if (type.equals("gif"))
-                files = exceptErrorGif(files);
-        }
+        if (expecterror && type.equals("gif"))
+            files = exceptErrorGif(files);
         return files;
     }
 
@@ -181,9 +179,7 @@ public class Utils {
         File externalStorageDirectory = Environment.getExternalStorageDirectory();
         File dir = new File(externalStorageDirectory.getAbsoluteFile() + "/" + name);
         if (!dir.exists()) {
-            boolean b = dir.mkdir();
-            if (!b)
-                return false;
+            return dir.mkdir();
         }
         return true;
     }

@@ -102,15 +102,18 @@ public class ShowMp4Activity extends AppCompatActivity implements SwipeRefreshLa
                     case RecyclerView.SCROLL_STATE_DRAGGING:
                         break;
                     case RecyclerView.SCROLL_STATE_IDLE:
-                        MediaPlayer player = adapter.getMediaPlayer();
-                        if (player != null) player.release();
+
+
                         final LinearLayoutManager manager = (LinearLayoutManager) recyclerView.getLayoutManager();
                         handler.postDelayed(new Runnable() {
                             @Override
                             public void run() {
                                 int pos = manager.findFirstVisibleItemPosition();
+                                int cnt=adapter.getItemCount();
                                 adapter.setPlayindex(pos);
                                 if(adapter.getLastplayindex()!=adapter.getPlayindex()){
+                                    MediaPlayer player = adapter.getMediaPlayer();
+                                    if (player != null) player.release();
                                     adapter.setLastplayindex(adapter.getPlayindex());
                                     adapter.notifyDataSetChanged();
                                 }

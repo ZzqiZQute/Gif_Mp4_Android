@@ -69,19 +69,19 @@ JNIEXPORT jboolean JNICALL Java_zz_app_gif2mp4_Utils_checkgif
 {
   float		rate = 1;
   float		realspeed;
-  jboolean	retval		= 1;
+  jboolean	retval		= JNI_TRUE;
   char		*input		= jstringToChar( env, path );
   AVFormatContext * inputFmtCtx	= avformat_alloc_context();
   int		rtn		= avformat_open_input( &inputFmtCtx, input, NULL, NULL );
   if ( rtn < 0 )
   {
-    retval = 0;
+    retval = JNI_FALSE;
     goto END;
   }
   avformat_find_stream_info( inputFmtCtx, NULL );
   if ( rtn < 0 )
   {
-    retval = 0;
+    retval = JNI_FALSE;
     goto END;
   }
   int	vsnb	= -1;
@@ -99,10 +99,10 @@ JNIEXPORT jboolean JNICALL Java_zz_app_gif2mp4_Utils_checkgif
   {
     if ( inputFmtCtx->streams[vsnb]->avg_frame_rate.den == 0 || realspeed == 0 )
     {
-      retval = 0;
+      retval = JNI_FALSE;
       goto END;
     }
-  } else retval = 0;
+  } else retval = JNI_FALSE;
 END :
   free( input );
   avformat_free_context( inputFmtCtx );
