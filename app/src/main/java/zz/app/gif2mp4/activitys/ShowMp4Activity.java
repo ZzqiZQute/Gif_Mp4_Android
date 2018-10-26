@@ -1,7 +1,6 @@
 package zz.app.gif2mp4.activitys;
 
 import android.content.SharedPreferences;
-import android.graphics.Bitmap;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Handler;
@@ -11,10 +10,10 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Pair;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
@@ -26,11 +25,12 @@ import java.util.Objects;
 import zz.app.gif2mp4.R;
 import zz.app.gif2mp4.Utils;
 import zz.app.gif2mp4.adapters.Mp4ListViewAdapter;
-import zz.app.gif2mp4.interfaces.IShowHide;
+import zz.app.gif2mp4.beans.Mp4Info;
+import zz.app.gif2mp4.interfaces.IGoBack;
 
-public class ShowMp4Activity extends AppCompatActivity implements SwipeRefreshLayout.OnRefreshListener, IShowHide {
+public class ShowMp4Activity extends AppCompatActivity implements SwipeRefreshLayout.OnRefreshListener, IGoBack {
     ArrayList<File> files;
-    ArrayList<Pair<String, Bitmap>> thumbnailMap;
+    ArrayList<Mp4Info> mp4Infos;
     SwipeRefreshLayout swipeRefreshLayout;
     Mp4ListViewAdapter adapter;
     boolean totop = false;
@@ -47,6 +47,7 @@ public class ShowMp4Activity extends AppCompatActivity implements SwipeRefreshLa
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        supportRequestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.activity_show_mp4);
         init();
 
@@ -54,15 +55,13 @@ public class ShowMp4Activity extends AppCompatActivity implements SwipeRefreshLa
 
     private void init() {
         sortmethod = getResources().getStringArray(R.array.sort_type);
-        setTitle("选择Mp4视频");
-        Objects.requireNonNull(getSupportActionBar()).setElevation(0);
         handler = new Handler(new Handler.Callback() {
             @Override
             public boolean handleMessage(Message msg) {
                 switch (msg.what) {
                     case MSG_IMGOK:
                         adapter.setFiles(files);
-                        adapter.setThumbnailMap(thumbnailMap);
+                        adapter.setThumbnailMap(mp4Infos);
                         adapter.setReady(true);
                         adapter.notifyDataSetChanged();
 
@@ -91,7 +90,7 @@ public class ShowMp4Activity extends AppCompatActivity implements SwipeRefreshLa
         swipeRefreshLayout.setOnRefreshListener(this);
         mp4ListView = findViewById(R.id.mp4listview);
         mp4ListView.setLayoutManager(new LinearLayoutManager(this));
-        adapter = new Mp4ListViewAdapter(this, handler, new ArrayList<File>(), new ArrayList<Pair<String, Bitmap>>());
+        adapter = new Mp4ListViewAdapter(this, handler);
         mp4ListView.setAdapter(adapter);
         mp4ListView.setOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
@@ -136,12 +135,12 @@ public class ShowMp4Activity extends AppCompatActivity implements SwipeRefreshLa
     }
 
     @Override
-    public void show() {
-
+    public void go() {
+        adapter.getMediaPlayer().start();
     }
 
     @Override
-    public void hide() {
+    public void back() {
 
     }
 
@@ -156,7 +155,7 @@ public class ShowMp4Activity extends AppCompatActivity implements SwipeRefreshLa
             @Override
             public void run() {
                 files = Utils.getFiles(Magic, sorttype, ascending, true);
-                thumbnailMap = Utils.getThumbnailMap(ShowMp4Activity.this, files);
+                mp4Infos = Utils.getThumbnailMap(ShowMp4Activity.this, files);
                 handler.obtainMessage(MSG_IMGOK).sendToTarget();
             }
         }).start();
@@ -233,7 +232,6 @@ public class ShowMp4Activity extends AppCompatActivity implements SwipeRefreshLa
         MediaPlayer player=adapter.getMediaPlayer();
         if(player!=null){
             player.release();
-            player=null;
         }
         super.onBackPressed();
     }

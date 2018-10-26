@@ -1,7 +1,9 @@
 package zz.app.gif2mp4.adapters;
 
 import android.animation.ValueAnimator;
+import android.app.ActivityOptions;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
@@ -9,10 +11,10 @@ import android.graphics.Point;
 import android.graphics.SurfaceTexture;
 import android.graphics.drawable.BitmapDrawable;
 import android.media.MediaPlayer;
+import android.os.Bundle;
 import android.os.Handler;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
-import android.util.Pair;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Surface;
@@ -28,19 +30,22 @@ import android.widget.TextView;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Objects;
 
 import zz.app.gif2mp4.R;
 import zz.app.gif2mp4.Utils;
+import zz.app.gif2mp4.activitys.Mp42GifActivity;
 import zz.app.gif2mp4.activitys.ShowMp4Activity;
+import zz.app.gif2mp4.beans.Mp4Info;
 import zz.app.gif2mp4.controllers.ActivityTransitionController;
-import zz.app.gif2mp4.interfaces.IShowHide;
+import zz.app.gif2mp4.interfaces.IGoBack;
 
 
 public class Mp4ListViewAdapter extends RecyclerView.Adapter<Mp4ListViewAdapter.ViewHolder> {
 
     private final Handler handler;
     private ArrayList<File> files;
-    private ArrayList<Pair<String, Bitmap>> thumbnailMap;
+    private ArrayList<Mp4Info> thumbnailMap;
     private ArrayList<String> showfiles;
     private Context context;
 
@@ -77,11 +82,11 @@ public class Mp4ListViewAdapter extends RecyclerView.Adapter<Mp4ListViewAdapter.
 
     private boolean ready = false;
 
-    public Mp4ListViewAdapter(Context context, Handler handler, ArrayList<File> files, ArrayList<Pair<String, Bitmap>> thumbnailMap) {
-        this.files = files;
+    public Mp4ListViewAdapter(Context context, Handler handler) {
+        this.files = new ArrayList<>();
         this.context = context;
         this.handler = handler;
-        this.thumbnailMap = thumbnailMap;
+        this.thumbnailMap = new ArrayList<>();
         showfiles = new ArrayList<>();
 
 
@@ -118,31 +123,13 @@ public class Mp4ListViewAdapter extends RecyclerView.Adapter<Mp4ListViewAdapter.
             File file = new File(path);
             String name = file.getName();
             viewHolder.tvImageName.setText(name);
-            Bitmap bitmap = findThumbnailMap(path).second;
+            Bitmap bitmap = Objects.requireNonNull(findThumbnailMap(path)).getThumbnail();
             if (bitmap != null) {
                 imgView.setImageDrawable(new BitmapDrawable(context.getResources(), bitmap));
             } else {
                 imgView.setImageDrawable(context.getDrawable(R.drawable.resourceerr));
             }
-            imgView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(final View v) {
 
-                    Utils.gif2mp4handler = new ActivityTransitionController((ShowMp4Activity) context);
-                    Utils.gif2mp4handler.setShowListener(new ActivityTransitionController.ShowListener() {
-                        @Override
-                        public void onShow(IShowHide from) {
-                            from.show();
-                        }
-                    });
-                    Utils.gif2mp4handler.setHideListener(new ActivityTransitionController.HideListener() {
-                        @Override
-                        public void onHide(IShowHide from) {
-                            from.hide();
-                        }
-                    });
-                }
-            });
             viewHolder.imageView.setVisibility(View.VISIBLE);
             if (viewHolder.flvideowrapper.getChildCount() == 3) {
                 LinearLayout layout = (LinearLayout) viewHolder.flvideowrapper.getChildAt(1);
@@ -226,41 +213,47 @@ public class Mp4ListViewAdapter extends RecyclerView.Adapter<Mp4ListViewAdapter.
                 layoutParams.width = size.x * 3 / 4;
                 textureView.setLayoutParams(layoutParams);
                 int[] mp4Size = Utils.getMp4Size(path);
-                int width = mp4Size[0];
-                int height = mp4Size[1];
-                float twidth = size.x * 3 / 4;
-                float theight = (size.x) * 3 / 4 - 2 * Utils.dp2px(context, 5);
-                float rx;
-                float ry;
-                float rw;
-                float rh;
-                float rxs, rys, rxo, ryo;
-                if (width * theight > height * twidth) {
-                    rw = twidth;
-                    float temp = twidth * height / width;
-                    ry = (theight - temp) / 2;
-                    Matrix matrix = new Matrix();
+                if (mp4Size != null) {
+                    int width = mp4Size[0];
+                    int height = mp4Size[1];
+                    float twidth = size.x * 3 / 4;
+                    float theight = (size.x) * 3 / 4 - 2 * Utils.dp2px(context, 5);
+                    float rx;
+                    float ry;
+                    float rw;
+                    float rh;
+                    float rxs, rys, rxo, ryo;
+                    if (width * theight > height * twidth) {
+                        rw = twidth;
+                        float temp = twidth * height / width;
+                        ry = (theight - temp) / 2;
+                        Matrix matrix = new Matrix();
 
-                    matrix.setScale(1, temp / theight);
-                    matrix.postTranslate(0, ry);
+                        matrix.setScale(1, temp / theight);
+                        matrix.postTranslate(0, ry);
 
-                    textureView.setTransform(matrix);
+                        textureView.setTransform(matrix);
+                    } else {
+                        rh = theight;
+                        float temp = theight * width / height;
+                        rx = (twidth - temp) / 2;
+                        Matrix matrix = new Matrix();
+
+                        matrix.setScale(temp / twidth, 1);
+                        matrix.postTranslate(rx, 0);
+
+                        textureView.setTransform(matrix);
+                    }
+
+                    //  Toast.makeText(context,"width="+width+",height="+height+"\ntwidth="+(size.x-2*margin)+",theight="+(size.x*3/4-2*margin),Toast.LENGTH_SHORT).go();
+
+                    layout.addView(textureView);
+                    viewHolder.tvLoadingHint.setVisibility(View.INVISIBLE);
+                    viewHolder.flvideowrapper.addView(layout, 1);
                 } else {
-                    rh = theight;
-                    float temp = theight * width / height;
-                    rx = (twidth - temp) / 2;
-                    Matrix matrix = new Matrix();
-
-                    matrix.setScale(temp / twidth, 1);
-                    matrix.postTranslate(rx, 0);
-
-                    textureView.setTransform(matrix);
+                    viewHolder.tvLoadingHint.setVisibility(View.INVISIBLE);
+                    viewHolder.imageView.setImageResource(R.drawable.resourceerr);
                 }
-
-                //  Toast.makeText(context,"width="+width+",height="+height+"\ntwidth="+(size.x-2*margin)+",theight="+(size.x*3/4-2*margin),Toast.LENGTH_SHORT).show();
-
-                layout.addView(textureView);
-                viewHolder.flvideowrapper.addView(layout, 1);
             }
             ValueAnimator animator = new ValueAnimator();
             animator.setFloatValues(0, 1);
@@ -281,10 +274,33 @@ public class Mp4ListViewAdapter extends RecyclerView.Adapter<Mp4ListViewAdapter.
 
                 }
             });
+            viewHolder.cardView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(final View v) {
+                    try {
+                        mediaPlayer.pause();
+                    }catch (IllegalArgumentException ignored){
 
-        } else
-
-        {
+                    }
+                    Intent intent = new Intent(context, Mp42GifActivity.class);
+                    Bundle bundle=ActivityOptions.makeSceneTransitionAnimation((ShowMp4Activity)context).toBundle();
+                    context.startActivity(intent,bundle);
+                    Utils.getManager().mp42gifhandler = new ActivityTransitionController((ShowMp4Activity) context);
+                    Utils.getManager().mp42gifhandler.setShowListener(new ActivityTransitionController.ShowListener() {
+                        @Override
+                        public void onShow(IGoBack from) {
+                            from.go();
+                        }
+                    });
+                    Utils.getManager().mp42gifhandler.setHideListener(new ActivityTransitionController.HideListener() {
+                        @Override
+                        public void onHide(IGoBack from) {
+                            from.back();
+                        }
+                    });
+                }
+            });
+        } else {
             if (ready) {
                 viewHolder.tvHint.setVisibility(View.VISIBLE);
                 if (i == 0) {
@@ -304,12 +320,12 @@ public class Mp4ListViewAdapter extends RecyclerView.Adapter<Mp4ListViewAdapter.
         }
     }
 
-    private Pair<String, Bitmap> findThumbnailMap(String path) {
-        for (Pair<String, Bitmap> p : thumbnailMap) {
-            if (p.first.equals(path))
+    private Mp4Info findThumbnailMap(String path) {
+        for (Mp4Info p : thumbnailMap) {
+            if (p.getPath().equals(path))
                 return p;
         }
-        return new Pair<>(null, null);
+        return null;
     }
 
     @Override
@@ -330,7 +346,6 @@ public class Mp4ListViewAdapter extends RecyclerView.Adapter<Mp4ListViewAdapter.
         ImageView imageView;
         TextView tvLoadingHint;
         TextView tvImageName;
-        FrameLayout frameLayout;
         FrameLayout flvideowrapper;
         CardView cardView;
         TextView tvHint;
@@ -344,7 +359,6 @@ public class Mp4ListViewAdapter extends RecyclerView.Adapter<Mp4ListViewAdapter.
             tvImageName = itemView.findViewById(R.id.tvimageName);
             cardView = itemView.findViewById(R.id.cardview);
             tvHint = itemView.findViewById(R.id.tvHint);
-            frameLayout = (FrameLayout) itemView;
             flvideowrapper = itemView.findViewById(R.id.flvideowrapper);
             btnAudio = itemView.findViewById(R.id.btnaudio);
             baudio = false;
@@ -352,12 +366,12 @@ public class Mp4ListViewAdapter extends RecyclerView.Adapter<Mp4ListViewAdapter.
 
     }
 
-    public void setThumbnailMap(ArrayList<Pair<String, Bitmap>> thumbnailMap) {
+    public void setThumbnailMap(ArrayList<Mp4Info> thumbnailMap) {
         this.thumbnailMap = thumbnailMap;
         showfiles.clear();
-        for (Pair<String, Bitmap> p : thumbnailMap) {
-            if (p.second != null)
-                showfiles.add(p.first);
+        for (Mp4Info p : thumbnailMap) {
+            if (p.getThumbnail() != null)
+                showfiles.add(p.getPath());
         }
 
     }

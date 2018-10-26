@@ -136,7 +136,7 @@ public class Gif2Mp4Activity extends AppCompatActivity {
                     @Override
                     public void onAnimationEnd(Animator animation) {
 
-                        Utils.gif2mp4handler.hide();
+                        Utils.getManager().gif2mp4handler.hide();
                     }
 
                     @Override
@@ -155,7 +155,7 @@ public class Gif2Mp4Activity extends AppCompatActivity {
         });
         setContentView(anchor);
 
-        b = Utils.gif2mp4handler.getBitmap();
+        b = Utils.getManager().gif2mp4handler.getBitmap();
 
         init();
         listView.setOnScrollListener(new RecyclerView.OnScrollListener() {
@@ -176,7 +176,7 @@ public class Gif2Mp4Activity extends AppCompatActivity {
 
 
     private void init() {
-        Utils.gif2mp4handler.setTo(this);
+        Utils.getManager().gif2mp4handler.setTo(this);
         btnOutput = findViewById(R.id.btnoutput);
         btnWeixin = findViewById(R.id.btnweixin);
         btnOutput.setOnClickListener(new View.OnClickListener() {
@@ -409,7 +409,7 @@ public class Gif2Mp4Activity extends AppCompatActivity {
             this.animator.cancel();
             this.animator = null;
         }
-        Utils.gif2mp4handler.show();
+        Utils.getManager().gif2mp4handler.show();
         llselectpicwrapper.setVisibility(View.VISIBLE);
         mainlayout.setVisibility(View.INVISIBLE);
         ValueAnimator animator = new ValueAnimator();

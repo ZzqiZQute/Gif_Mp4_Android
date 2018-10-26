@@ -24,18 +24,26 @@
         <activity
             android:name=".activitys.ShowGifActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
-            android:screenOrientation="portrait"></activity>
+            android:screenOrientation="portrait" />
         <activity
             android:name=".activitys.Gif2Mp4Activity"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:screenOrientation="portrait"
-            android:theme="@style/TranslucentWindow"></activity>
+            android:theme="@style/TranslucentWindow" />
         <activity
             android:name=".activitys.TestActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:screenOrientation="portrait"
-            android:theme="@style/TranslucentWindow"></activity>
-        <activity android:name=".activitys.ShowMp4Activity"></activity>
+            android:theme="@style/TranslucentWindow" />
+        <activity android:name=".activitys.ShowMp4Activity"
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:screenOrientation="portrait"/>
+        <activity android:name=".activitys.Mp42GifActivity"
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:screenOrientation="portrait">
+
+        </activity>
+
     </application>
 
 </manifest>

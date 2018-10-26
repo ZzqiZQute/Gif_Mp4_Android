@@ -8,12 +8,12 @@ import android.widget.FrameLayout;
 
 import zz.app.gif2mp4.R;
 
-public class YellowTopFrameLayout extends FrameLayout {
+public class YellowStyleFrameLayout extends FrameLayout {
     int a = 80;
     Paint paint;
     private static final String TAG = "FrameLayout1";
 
-    public YellowTopFrameLayout(Context context, AttributeSet attrs) {
+    public YellowStyleFrameLayout(Context context, AttributeSet attrs) {
         super(context, attrs);
         paint = new Paint(Paint.ANTI_ALIAS_FLAG);
         setWillNotDraw(false);

@@ -35,7 +35,7 @@ import zz.app.gif2mp4.Utils;
 import zz.app.gif2mp4.activitys.Gif2Mp4Activity;
 import zz.app.gif2mp4.activitys.ShowGifActivity;
 import zz.app.gif2mp4.controllers.ActivityTransitionController;
-import zz.app.gif2mp4.interfaces.IShowHide;
+import zz.app.gif2mp4.interfaces.IGoBack;
 
 
 public class GifListViewAdapter extends RecyclerView.Adapter<GifListViewAdapter.ViewHolder> {
@@ -108,17 +108,17 @@ public class GifListViewAdapter extends RecyclerView.Adapter<GifListViewAdapter.
                         if (!Utils.checkgif(files.get(viewHolder.getPosition()-1).getAbsolutePath())) {
                             Toast.makeText(activity, "无效的Gif文件或为静态Gif", Toast.LENGTH_SHORT).show();
                         } else {
-                            Utils.gif2mp4handler = new ActivityTransitionController((ShowGifActivity) context);
-                            Utils.gif2mp4handler.setShowListener(new ActivityTransitionController.ShowListener() {
+                            Utils.getManager().gif2mp4handler = new ActivityTransitionController((ShowGifActivity) context);
+                            Utils.getManager().gif2mp4handler.setShowListener(new ActivityTransitionController.ShowListener() {
                                 @Override
-                                public void onShow(IShowHide from) {
-                                    from.show();
+                                public void onShow(IGoBack from) {
+                                    from.go();
                                 }
                             });
-                            Utils.gif2mp4handler.setHideListener(new ActivityTransitionController.HideListener() {
+                            Utils.getManager().gif2mp4handler.setHideListener(new ActivityTransitionController.HideListener() {
                                 @Override
-                                public void onHide(IShowHide from) {
-                                    from.hide();
+                                public void onHide(IGoBack from) {
+                                    from.back();
                                 }
                             });
                             intent.putExtra("gifpath", files.get(viewHolder.getPosition()-1).getAbsolutePath());
@@ -128,7 +128,7 @@ public class GifListViewAdapter extends RecyclerView.Adapter<GifListViewAdapter.
                             Bitmap bitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
                             Canvas canvas = new Canvas(bitmap);
                             gifView.draw(canvas);
-                            Utils.gif2mp4handler.setBitmap(bitmap);
+                            Utils.getManager().gif2mp4handler.setBitmap(bitmap);
                             int[] pos = new int[2];
                             gifView.getLocationInWindow(pos);
                             intent.putExtra("picy", pos[1]);
@@ -165,6 +165,7 @@ public class GifListViewAdapter extends RecyclerView.Adapter<GifListViewAdapter.
                     return false;
                 }
             });
+
         }else{
             if(ready) {
                 viewHolder.tvHint.setVisibility(View.VISIBLE);

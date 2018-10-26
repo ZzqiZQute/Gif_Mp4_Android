@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<zz.app.gif2mp4.layouts.YellowTopFrameLayout xmlns:tools="http://schemas.android.com/tools"
+<zz.app.gif2mp4.layouts.YellowStyleFrameLayout xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent" android:layout_height="match_parent"
     xmlns:android="http://schemas.android.com/apk/res/android">
     <RelativeLayout
@@ -77,4 +77,4 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:id="@+id/llselectpicwrapper"></LinearLayout>
-</zz.app.gif2mp4.layouts.YellowTopFrameLayout>
+</zz.app.gif2mp4.layouts.YellowStyleFrameLayout>

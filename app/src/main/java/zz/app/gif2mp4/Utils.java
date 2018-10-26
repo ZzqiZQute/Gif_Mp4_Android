@@ -4,11 +4,13 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Paint;
 import android.media.MediaMetadataRetriever;
 import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.util.Pair;
+import android.widget.ActionMenuView;
 import android.widget.Toast;
 
 import org.apache.commons.io.FileUtils;
@@ -23,9 +25,15 @@ import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Locale;
 
+import zz.app.gif2mp4.beans.Mp4Info;
 import zz.app.gif2mp4.controllers.ActivityTransitionController;
+import zz.app.gif2mp4.managers.ActivityTransitionManager;
 
 public class Utils {
+
+
+
+
     static {
         System.loadLibrary("x264");
         System.loadLibrary("swresample-3");
@@ -37,8 +45,18 @@ public class Utils {
         System.loadLibrary("avutil-56");
         System.loadLibrary("avfilter-7");
         System.loadLibrary("zzutils");
-    }
 
+
+    }
+    public static ActivityTransitionManager getManager() {
+        return manager;
+    }
+    private static ActivityTransitionManager manager;
+    public static void initManager(){
+        if(manager==null){
+            manager=new ActivityTransitionManager();
+        }
+    }
     public static final int SORTTYPE_TIME = 0;
     public static final int SORTTYPE_SIZE = 1;
     public static final int SORTTYPE_NAME = 2;
@@ -50,7 +68,6 @@ public class Utils {
 
     private static final String TAG = "Utils";
 
-    public static ActivityTransitionController gif2mp4handler;
 
 
     public static int getProgress2() {
@@ -274,8 +291,8 @@ public class Utils {
 
     public static native int[] getMp4Size(String path);
 
-    public static ArrayList<Pair<String, Bitmap>> getThumbnailMap(Context context, ArrayList<File> files) {
-        ArrayList<Pair<String, Bitmap>> ret = new ArrayList<>();
+    public static ArrayList<Mp4Info> getThumbnailMap(Context context, ArrayList<File> files) {
+        ArrayList<Mp4Info> ret = new ArrayList<>();
         SharedPreferences preferences = context.getSharedPreferences("mp42gif", Context.MODE_PRIVATE);
         MediaMetadataRetriever retriever = new MediaMetadataRetriever();
         for (File f : files) {
@@ -303,23 +320,39 @@ public class Utils {
                             bitmap.compress(Bitmap.CompressFormat.JPEG, 80, outputStream);
                             Bitmap bitmap1 = BitmapFactory.decodeFile(output);
                             preferences.edit().putString(path, md5).apply();
-                            ret.add(new Pair<>(path, bitmap1));
+                            int[] size=getMp4Size(path);
+                            if(size!=null){
+                                Mp4Info info=new Mp4Info(path,size[0],size[1]);
+                                info.setThumbnail(bitmap1);
+                                ret.add(info);
+                            }
+
                         } catch (FileNotFoundException e) {
                             e.printStackTrace();
                         }
                     } else {
                         preferences.edit().putString(path, md5).apply();
-                        ret.add(new Pair<String, Bitmap>(path, null));
+
                     }
                 } else {
                     preferences.edit().putString(path, md5).apply();
-                    ret.add(new Pair<>(path, BitmapFactory.decodeFile(f2.getAbsolutePath())));
+                    int[] size=getMp4Size(path);
+                    if(size!=null){
+                        Mp4Info info=new Mp4Info(path,size[0],size[1]);
+                        info.setThumbnail(BitmapFactory.decodeFile(f2.getAbsolutePath()));
+                        ret.add(info);
+                    }
                 }
             } else {
                 String md5 = preferences.getString(path, "");
                 String output = getDir(".cache") + md5 + ".jpg";
                 Bitmap bitmap = BitmapFactory.decodeFile(output);
-                ret.add(new Pair<>(path, bitmap));
+                int[] size=getMp4Size(path);
+                if(size!=null){
+                    Mp4Info info=new Mp4Info(path,size[0],size[1]);
+                    info.setThumbnail(bitmap);
+                    ret.add(info);
+                }
             }
 
         }

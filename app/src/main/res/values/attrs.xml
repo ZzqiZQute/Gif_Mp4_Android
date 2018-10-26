@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="Mp4ProgressSliderView">
+        <attr name="progressColor" format="color" />
+        <attr name="boundColor" format="color" />
+        <attr name="topoffset" format="integer" />
+    </declare-styleable>
+
+</resources>

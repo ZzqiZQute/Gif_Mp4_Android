@@ -1,5 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
-<zz.app.gif2mp4.layouts.YellowTopFrameLayout android:layout_width="match_parent"
+<LinearLayout android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+    <android.support.v7.widget.Toolbar
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:title="选择Mp4文件"
+        android:elevation="0dp"
+        app:titleTextColor="@android:color/white"
+        android:background="@color/colorPrimary">
+
+    </android.support.v7.widget.Toolbar>
+<zz.app.gif2mp4.layouts.YellowStyleFrameLayout android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:android="http://schemas.android.com/apk/res/android" >
 <android.support.v4.widget.SwipeRefreshLayout
@@ -13,4 +27,5 @@
 
     </android.support.v7.widget.RecyclerView>
 </android.support.v4.widget.SwipeRefreshLayout>
-</zz.app.gif2mp4.layouts.YellowTopFrameLayout>
+</zz.app.gif2mp4.layouts.YellowStyleFrameLayout>
+</LinearLayout>

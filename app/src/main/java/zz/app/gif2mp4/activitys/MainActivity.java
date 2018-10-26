@@ -17,7 +17,8 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        title( "一个神奇的软件？");
+        Utils.initManager();
+        title( "Gif2Mp4");
         init();
 
     }

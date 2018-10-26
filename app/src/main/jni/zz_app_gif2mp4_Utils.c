@@ -717,8 +717,11 @@ JNIEXPORT jintArray JNICALL Java_zz_app_gif2mp4_Utils_getMp4Size
     char		*input		= jstringToChar( env, path );
     int ret[2];
     AVFormatContext * inputFmtCtx	= avformat_alloc_context();
-    avformat_open_input( &inputFmtCtx, input, NULL, NULL );
-    avformat_find_stream_info( inputFmtCtx, NULL );
+    int err;
+    err=avformat_open_input( &inputFmtCtx, input, NULL, NULL );
+    if(err<0)return NULL;
+    err=avformat_find_stream_info( inputFmtCtx, NULL );
+    if(err<0)return NULL;
     int	vsnb	= -1;
     int	i	= 0, j = 0, k = 0;
     float	sum	= 0;

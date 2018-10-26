@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical">
+
+
+    <android.support.v7.widget.Toolbar
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:title="输出配置"
+        android:elevation="0dp"
+        app:titleTextColor="@android:color/white"
+        android:background="@color/colorPrimary">
+
+    </android.support.v7.widget.Toolbar>
+
+<zz.app.gif2mp4.layouts.YellowStyleFrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".activitys.Mp42GifActivity">
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="250dp"
+                android:background="@color/colorPrimary"
+               >
+                <FrameLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_centerInParent="true"
+                    android:layout_margin="@dimen/tendp"
+                    android:background="@android:color/white">
+
+                </FrameLayout>
+                <TextureView
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_centerInParent="true"
+                    android:layout_margin="@dimen/tendp"
+                    />
+            </RelativeLayout>
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="@dimen/tendp">
+                <ImageButton
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    android:scaleType="centerInside"
+                    android:id="@+id/btnPlaypause"
+                    android:background="@android:color/transparent"
+                    android:src="@drawable/pause"
+                    android:contentDescription="@string/str_playpause" />
+                <zz.app.gif2mp4.views.Mp4ProgressSliderView
+                    android:layout_width="match_parent"
+                    android:layout_height="60dp"
+                    app:boundColor="@color/colorAccent"
+                    android:layout_toStartOf="@id/btnPlaypause"
+                    app:progressColor="@color/colorPrimary"
+                    app:topoffset="-40"
+                    android:id="@+id/mp4progress"/>
+            </RelativeLayout>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="50dp"
+                    android:layout_weight="1"
+                    android:textAlignment="center"
+                    android:gravity="center"
+                    android:id="@+id/tvleft"
+                    android:textColor="@android:color/black"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:text="00:00.000"/>
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="50dp"
+                    android:layout_weight="1"
+                    android:textAlignment="center"
+                    android:id="@+id/tvcurrent"
+                    android:gravity="center"
+                    android:textColor="@android:color/black"
+                    android:text="00:00.000"/>
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="50dp"
+                    android:layout_weight="1"
+                    android:textAlignment="center"
+                    android:id="@+id/tvright"
+                    android:gravity="center"
+                    android:background="?attr/selectableItemBackground"
+                    android:textColor="@android:color/black"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:text="00:00.000"/>
+            </LinearLayout>
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+                <FrameLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="120dp"
+                    android:id="@+id/layoutconvert"
+                    android:layout_alignParentBottom="true">
+
+                </FrameLayout>
+                <android.support.v7.widget.RecyclerView
+                    android:id="@+id/rvconfig"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_above="@id/layoutconvert">
+
+                </android.support.v7.widget.RecyclerView>
+            </RelativeLayout>
+
+
+        </LinearLayout>
+    </FrameLayout>
+
+</zz.app.gif2mp4.layouts.YellowStyleFrameLayout>
+</LinearLayout>

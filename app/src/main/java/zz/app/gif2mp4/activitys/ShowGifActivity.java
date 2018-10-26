@@ -15,7 +15,6 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
-import android.widget.Toast;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -24,9 +23,9 @@ import java.util.Objects;
 import zz.app.gif2mp4.R;
 import zz.app.gif2mp4.Utils;
 import zz.app.gif2mp4.adapters.GifListViewAdapter;
-import zz.app.gif2mp4.interfaces.IShowHide;
+import zz.app.gif2mp4.interfaces.IGoBack;
 
-public class ShowGifActivity extends AppCompatActivity implements SwipeRefreshLayout.OnRefreshListener,IShowHide {
+public class ShowGifActivity extends AppCompatActivity implements SwipeRefreshLayout.OnRefreshListener,IGoBack {
     RecyclerView giflistview;
     ArrayList<File> files;
     SwipeRefreshLayout swipeRefreshLayout;
@@ -45,7 +44,7 @@ public class ShowGifActivity extends AppCompatActivity implements SwipeRefreshLa
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_show_gif);
-        setTitle("选择Gif图片");
+        setTitle("选择Gif文件");
         Objects.requireNonNull(getSupportActionBar()).setElevation(0);
         init();
     }
@@ -173,11 +172,11 @@ public class ShowGifActivity extends AppCompatActivity implements SwipeRefreshLa
     }
 
 
-    public void hide() {
+    public void back() {
         swipeRefreshLayout.setVisibility(View.INVISIBLE);
     }
 
-    public void show() {
+    public void go() {
         swipeRefreshLayout.setVisibility(View.VISIBLE);
     }
 }

@@ -28,6 +28,8 @@ import com.bumptech.glide.load.resource.gif.GifDrawable;
 import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.Target;
 
+import org.apache.commons.io.FileUtils;
+
 import java.io.File;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -43,17 +45,18 @@ import static android.content.Context.MODE_PRIVATE;
 public class G2MConfigAdapter extends RecyclerView.Adapter<G2MConfigAdapter.ViewHolder> {
     private final Context context;
     private final String gifpath;
-    private final String[] encodertype = {"H.264(朋友圈)", "MPEG4"};
+    private final String[] encodertype = {"H.264", "MPEG4"};
     private int encodertypenum = 0;
     private int gifframes = 0;
     private float gifrate = 0;
     private double predicttime = 0;
     private double outputtime = 0;
-    private double bitrate ;
+    private double bitrate;
     private Handler handler;
     private AlertDialog encoderdlg;
-    private boolean showpic=true;
-    private  boolean ready=false;
+    private boolean showpic = true;
+    private boolean ready = false;
+
     public int getEncodertypenum() {
         return encodertypenum;
     }
@@ -158,7 +161,7 @@ public class G2MConfigAdapter extends RecyclerView.Adapter<G2MConfigAdapter.View
             viewHolder.tvgifname = v2;
             return viewHolder;
         } else {
-            View v = View.inflate(context, R.layout.g2moptionsadapterview, null);
+            View v = View.inflate(context, R.layout.optionsadapterview, null);
             ViewHolder viewHolder = new ViewHolder(v);
             viewHolder.tvoptionname = v.findViewById(R.id.tvOptionName);
             viewHolder.tvoptionvalue = v.findViewById(R.id.tvOptionValue);
@@ -176,18 +179,17 @@ public class G2MConfigAdapter extends RecyclerView.Adapter<G2MConfigAdapter.View
 
     @Override
     public void onBindViewHolder(ViewHolder viewHolder, int i) {
-        if(i==0){
-            if(!showpic)viewHolder.ivgifpreview.setImageAlpha(0);
+        if (i == 0) {
+            if (!showpic) viewHolder.ivgifpreview.setImageAlpha(0);
             else viewHolder.ivgifpreview.setImageAlpha(255);
-        }
-        else if (i == 1) {
+        } else if (i == 1) {
             viewHolder.itemView.setClickable(false);
             viewHolder.tvoptionvalue.setTextAlignment(View.TEXT_ALIGNMENT_TEXT_END);
             viewHolder.tvoptionname.setText("详细信息");
             if (gifframes == 0)
                 viewHolder.tvoptionvalue.setText("???");
             else {
-                String s = String.format(Locale.getDefault(), "帧数:%d\n平均帧率:%.1f/s\n预计时长:%.1fs", gifframes, gifrate, gifframes / gifrate);
+                String s = String.format(Locale.getDefault(), "帧数:%d 帧率:%.1f/s\n时长:%.1fs 大小:%s", gifframes, gifrate, gifframes / gifrate, Utils.size2String(FileUtils.sizeOf(new File(gifpath))));
                 viewHolder.tvoptionvalue.setText(s);
             }
 
@@ -196,15 +198,7 @@ public class G2MConfigAdapter extends RecyclerView.Adapter<G2MConfigAdapter.View
             params.setMargins(0, 50, 0, 0);
             viewHolder.itemView.setLayoutParams(params);
             viewHolder.tvoptionname.setText("编码器");
-            if (encodertypenum == 0)
-                viewHolder.tvoptionvalue.setText(encodertype[encodertypenum]);
-            else if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
-                Spanned s = Html.fromHtml(encodertype[1] + "(<del>朋友圈</del>)", Html.FROM_HTML_MODE_COMPACT);
-                viewHolder.tvoptionvalue.setText(s);
-            } else {
-                String s = encodertype[1] + "(朋友圈×)";
-                viewHolder.tvoptionvalue.setText(s);
-            }
+            viewHolder.tvoptionvalue.setText(encodertype[encodertypenum]);
             viewHolder.itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
@@ -224,7 +218,8 @@ public class G2MConfigAdapter extends RecyclerView.Adapter<G2MConfigAdapter.View
                         r1.setChecked(true);
                     } else
                         r1.setChecked(false);
-                    r1.setText(encodertype[0]);
+                    String s1 = encodertype[0] + "(朋友圈)";
+                    r1.setText(s1);
                     l1.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View view) {
@@ -272,7 +267,7 @@ public class G2MConfigAdapter extends RecyclerView.Adapter<G2MConfigAdapter.View
             viewHolder.itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    View view1 = View.inflate(context, R.layout.bitratesettinglayout, null);
+                    View view1 = View.inflate(context, R.layout.bitratesettingdialoglayout, null);
                     final EditText editText = view1.findViewById(R.id.etbitrate);
                     new AlertDialog.Builder(context).setTitle("比特率").setView(view1).setPositiveButton("确定", new DialogInterface.OnClickListener() {
                         @Override
@@ -284,7 +279,6 @@ public class G2MConfigAdapter extends RecyclerView.Adapter<G2MConfigAdapter.View
                                 bitrate = b;
                                 SharedPreferences preferences = context.getSharedPreferences("gif2mp4", MODE_PRIVATE);
                                 preferences.edit().putInt("defaultbitrate", (int) bitrate).apply();
-
                                 notifyItemChanged(3);
                             }
                         }
