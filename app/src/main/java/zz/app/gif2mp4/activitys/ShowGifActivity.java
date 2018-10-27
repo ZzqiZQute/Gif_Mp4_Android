@@ -9,6 +9,8 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.transition.Transition;
+import android.transition.TransitionInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -50,6 +52,8 @@ public class ShowGifActivity extends AppCompatActivity implements SwipeRefreshLa
     }
 
     private void init() {
+        Transition transition=TransitionInflater.from(this).inflateTransition(R.transition.fade);
+        getWindow().setEnterTransition(transition);
         sortmethod=getResources().getStringArray(R.array.sort_type);
         handler = new Handler(new Handler.Callback() {
             @Override

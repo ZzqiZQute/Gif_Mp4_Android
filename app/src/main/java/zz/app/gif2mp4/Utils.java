@@ -287,9 +287,11 @@ public class Utils {
 
     public static native int gif2mp4(String gifpath, String mp4path, int encodertypenum, double bitrate, double outputtime, int framecnt);
 
-    public static native int mp42gif(String mp4path, String gifpath, int fps, int rotate, int width, int height, double start, double end);
+    public static native int mp42gif(String mp4path, String gifpath, double fps, int rotate, int width, int height, double start, double end);
 
     public static native int[] getMp4Size(String path);
+
+    public static native long[] getMp4Info(String info);
 
     public static ArrayList<Mp4Info> getThumbnailMap(Context context, ArrayList<File> files) {
         ArrayList<Mp4Info> ret = new ArrayList<>();
@@ -364,4 +366,10 @@ public class Utils {
     }
 
 
+    public static String mills2Str(int position) {
+        int milli=position%1000;
+        int second=position/1000%60;
+        int minus=(position/1000)/60;
+        return String.format(Locale.getDefault(),"%d:%02d.%03d",minus,second,milli);
+    }
 }

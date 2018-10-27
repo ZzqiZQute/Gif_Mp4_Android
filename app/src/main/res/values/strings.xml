@@ -7,6 +7,11 @@
     <string name="str_converting">拼命转换中…</string>
     <string name="str_audio">音频</string>
     <string name="str_playpause">播放与暂停</string>
+    <string name="str_defaulttime">0:00.000</string>
+    <string name="str_left_bound">左边界</string>
+    <string name="str_current">当前</string>
+    <string name="str_right_bound">右边界</string>
+    <string name="str_convert">转换</string>
     <string-array name="sort_type">
         <item>按时间降序</item>
         <item>按时间升序</item>
@@ -14,5 +19,17 @@
         <item>按大小升序</item>
         <item>按名称降序</item>
         <item>按名称升序</item>
+    </string-array>
+    <string-array name="mp4convertoptions">
+        <item>详细信息</item>
+        <item>视频大小</item>
+        <item>帧率</item>
+        <item>旋转角度</item>
+    </string-array>
+    <string-array name="mp4rotationselect">
+        <item>原始</item>
+        <item>顺时针90°</item>
+        <item>180°</item>
+        <item>逆时针90°</item>
     </string-array>
 </resources>

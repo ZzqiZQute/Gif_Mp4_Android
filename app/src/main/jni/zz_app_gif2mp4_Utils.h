@@ -64,10 +64,10 @@ JNIEXPORT jint JNICALL Java_zz_app_gif2mp4_Utils_gif2mp4
 /*
  * Class:     zz_app_gif2mp4_Utils
  * Method:    mp42gif
- * Signature: (Ljava/lang/String;Ljava/lang/String;IIIIDD)I
+ * Signature: (Ljava/lang/String;Ljava/lang/String;DIIIDD)I
  */
 JNIEXPORT jint JNICALL Java_zz_app_gif2mp4_Utils_mp42gif
-  (JNIEnv *, jclass, jstring, jstring, jint, jint, jint, jint, jdouble, jdouble);
+  (JNIEnv *, jclass, jstring, jstring, jdouble, jint, jint, jint, jdouble, jdouble);
 
 /*
  * Class:     zz_app_gif2mp4_Utils
@@ -75,6 +75,14 @@ JNIEXPORT jint JNICALL Java_zz_app_gif2mp4_Utils_mp42gif
  * Signature: (Ljava/lang/String;)[I
  */
 JNIEXPORT jintArray JNICALL Java_zz_app_gif2mp4_Utils_getMp4Size
+  (JNIEnv *, jclass, jstring);
+
+/*
+ * Class:     zz_app_gif2mp4_Utils
+ * Method:    getMp4Info
+ * Signature: (Ljava/lang/String;)[J
+ */
+JNIEXPORT jlongArray JNICALL Java_zz_app_gif2mp4_Utils_getMp4Info
   (JNIEnv *, jclass, jstring);
 
 #ifdef __cplusplus

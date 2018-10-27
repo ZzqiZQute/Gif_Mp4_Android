@@ -152,7 +152,7 @@ public class GifListViewAdapter extends RecyclerView.Adapter<GifListViewAdapter.
                     builder1.setMessage("是否删除Gif？").setPositiveButton("是", new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialogInterface, int i) {
-                            boolean b = FileUtils.deleteQuietly(files.get(viewHolder.getPosition()));
+                            boolean b = FileUtils.deleteQuietly(files.get(viewHolder.getPosition()-1));
                             ShowGifActivity activity = ((ShowGifActivity) context);
                             activity.freshimg();
                         }

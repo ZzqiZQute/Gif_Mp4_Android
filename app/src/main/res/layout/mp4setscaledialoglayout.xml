@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical">
+<GridLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingTop="20dp"
+    android:columnCount="4"
+    android:rowCount="4">
+
+    <TextView
+        android:text="原始宽度"
+        android:layout_row="0"
+        android:layout_column="0"
+        android:layout_columnWeight="1"
+        android:gravity="center"
+        android:layout_rowWeight="1"
+        android:layout_margin="5dp"/>
+
+    <TextView
+        android:layout_row="0"
+        android:layout_column="1"
+        android:gravity="center"
+        android:layout_columnWeight="1"
+        android:layout_rowWeight="1"
+        android:id="@+id/tvOriWidth"
+        android:layout_margin="5dp"/>
+    <TextView
+        android:layout_row="0"
+        android:layout_column="2"
+        android:text="原始高度"
+        android:gravity="center"
+        android:layout_columnWeight="1"
+        android:layout_rowWeight="1"
+        android:layout_margin="5dp"/>
+    <TextView
+        android:layout_row="0"
+        android:layout_column="3"
+        android:id="@+id/tvOriHeight"
+        android:gravity="center"
+        android:layout_columnWeight="1"
+        android:layout_rowWeight="1"
+        android:layout_margin="5dp"/>
+
+    <TextView
+        android:layout_height="wrap_content"
+        android:layout_row="1"
+        android:gravity="center"
+        android:layout_rowWeight="1"
+        android:layout_column="0"
+        android:layout_columnWeight="1"
+        android:layout_margin="5dp"
+        android:text="输出宽度" />
+    <EditText
+        android:layout_row="1"
+        android:layout_column="1"
+        android:gravity="center"
+        android:layout_columnWeight="1"
+        android:layout_rowWeight="1"
+        android:id="@+id/etOutWidth"
+        android:layout_margin="5dp"
+        android:inputType="numberDecimal"
+        android:maxLength="4"/>
+    <TextView
+        android:layout_row="1"
+        android:layout_column="2"
+        android:text="输出高度"
+        android:gravity="center"
+        android:layout_columnWeight="1" 
+        android:layout_margin="5dp"
+        android:layout_rowWeight="1"/>
+    <EditText
+        android:layout_row="1"
+        android:layout_column="3"
+        android:gravity="center"
+        android:layout_columnWeight="1"
+        android:layout_rowWeight="1"
+        android:id="@+id/etOutHeight"
+        android:layout_margin="5dp"
+        android:inputType="numberDecimal"
+        android:maxLength="4"/>
+</GridLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="缩放比例（优先）"
+            android:textAlignment="center"/>
+        <RelativeLayout
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content">
+            <EditText
+                android:layout_width="100dp"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:inputType="numberDecimal"
+                android:hint="（例：0.5）"
+                android:id="@+id/etScale"/>
+        </RelativeLayout>
+
+    </LinearLayout>
+<TextView
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:text="视频尺寸影响输出文件大小"
+    android:textAlignment="center"/>
+</LinearLayout>

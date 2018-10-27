@@ -3,12 +3,9 @@ package zz.app.gif2mp4.activitys;
 import android.animation.Animator;
 import android.animation.ValueAnimator;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
-import android.graphics.Canvas;
-import android.graphics.DashPathEffect;
-import android.graphics.Paint;
-import android.graphics.Path;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
@@ -38,6 +35,9 @@ import android.widget.Toast;
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Locale;
 import java.util.Objects;
 
 import zz.app.gif2mp4.R;
@@ -49,6 +49,7 @@ public class Gif2Mp4Activity extends AppCompatActivity {
     private static final int MSG_READGIFFRAMES = 0;
     private static final int MSG_CONVERTFINISH = 1;
     private static final int MSG_CONVERTPROGRESSCHANGED = 2;
+    private static final int MSG_SCANFINISH = 3;
     String gifpath;
     String mp4path;
     RecyclerView listView;
@@ -79,6 +80,7 @@ public class Gif2Mp4Activity extends AppCompatActivity {
     private int tnmargin;
     private int tmargin;
     private ValueAnimator animator;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
@@ -182,49 +184,59 @@ public class Gif2Mp4Activity extends AppCompatActivity {
         btnOutput.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                mp4path = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Gif_Mp4/Mp4/" + new File(gifpath).getName().split("\\.")[0] + ".mp4";
-                File f = new File(mp4path);
-                if (f.exists()) {
-                    FileUtils.deleteQuietly(f);
-                }
-                convertThread = new Thread(new Runnable() {
+
+                new AlertDialog.Builder(Gif2Mp4Activity.this).setTitle("提示").setMessage("即将转换，是否确认？").setPositiveButton("是", new DialogInterface.OnClickListener() {
                     @Override
-                    public void run() {
-                        try {
-                            Thread.sleep(500);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
+                    public void onClick(DialogInterface dialog, int which) {
+                        Calendar calendar=Calendar.getInstance();
+                        SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmss", Locale.getDefault());
+                        String str=format.format(calendar.getTime());
+                        mp4path = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Gif_Mp4/Mp4/" + str + ".mp4";
+                        File f = new File(mp4path);
+                        if (f.exists()) {
+                            FileUtils.deleteQuietly(f);
                         }
-                        int ret = Utils.gif2mp4(gifpath, mp4path, adapter.getEncodertypenum(), adapter.getBitrate(), adapter.getOutputtime(), adapter.getGifframes());
-                        Log.i(TAG, "run: ret=" + ret);
-                        Utils.setProgress2(0);
-                        handler.obtainMessage(MSG_CONVERTFINISH).sendToTarget();
-                        convertThread = null;
-                        if (readProgressThread != null && !readProgressThread.isInterrupted()) {
-                            readProgressThread.interrupt();
-                            readProgressThread = null;
-                        }
-                    }
-                });
-                readProgressThread = new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        while (!Thread.interrupted()) {
-                            progress = Utils.getProgress2();
-                            if (progress != lastprogress) {
-                                lastprogress = progress;
-                                handler.obtainMessage(MSG_CONVERTPROGRESSCHANGED).sendToTarget();
+                        convertThread = new Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                try {
+                                    Thread.sleep(500);
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
+                                int ret = Utils.gif2mp4(gifpath, mp4path, adapter.getEncodertypenum(), adapter.getBitrate(), adapter.getOutputtime(), adapter.getGifframes());
+                                Log.i(TAG, "run: ret=" + ret);
+                                Utils.setProgress2(0);
+                                handler.obtainMessage(MSG_CONVERTFINISH).sendToTarget();
+                                convertThread = null;
+                                if (readProgressThread != null && !readProgressThread.isInterrupted()) {
+                                    readProgressThread.interrupt();
+                                    readProgressThread = null;
+                                }
                             }
-                        }
+                        });
+                        readProgressThread = new Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                while (!Thread.interrupted()) {
+                                    progress = Utils.getProgress2();
+                                    if (progress != lastprogress) {
+                                        lastprogress = progress;
+                                        handler.obtainMessage(MSG_CONVERTPROGRESSCHANGED).sendToTarget();
+                                    }
+                                }
+                            }
+                        });
+                        View v = View.inflate(Gif2Mp4Activity.this, R.layout.convertdialoglayout, null);
+                        pbConvert = v.findViewById(R.id.pbconvert);
+                        tvConvertProgress = v.findViewById(R.id.tvconvertprogress);
+                        tvConvertProgress.setText("0%");
+                        convertDialog = new AlertDialog.Builder(Gif2Mp4Activity.this).setView(v).setCancelable(false).show();
+                        convertThread.start();
+                        readProgressThread.start();
                     }
-                });
-                View v = View.inflate(Gif2Mp4Activity.this, R.layout.convertdialoglayout, null);
-                pbConvert = v.findViewById(R.id.pbconvert);
-                tvConvertProgress = v.findViewById(R.id.tvconvertprogress);
-                tvConvertProgress.setText("0%");
-                convertDialog = new AlertDialog.Builder(Gif2Mp4Activity.this).setView(v).setCancelable(false).show();
-                convertThread.start();
-                readProgressThread.start();
+                }).setNegativeButton("否",null).show();
+
 
 
             }
@@ -297,11 +309,12 @@ public class Gif2Mp4Activity extends AppCompatActivity {
                                     @Override
                                     public void onScanCompleted(String path, Uri uri) {
                                         // 当MediaScanner完成文件扫描后回调
+                                        handler.obtainMessage(MSG_SCANFINISH).sendToTarget();
+
                                     }
                                 });
                         connection.connect();
-                        File f = new File(mp4path);
-                        Toast.makeText(Gif2Mp4Activity.this, "转换完成 文件大小:" + Utils.size2String(f.length()) + "\n" + mp4path, Toast.LENGTH_SHORT).show();
+
                         break;
                     case MSG_CONVERTPROGRESSCHANGED:
                         if (pbConvert != null) {
@@ -311,6 +324,19 @@ public class Gif2Mp4Activity extends AppCompatActivity {
                             String s = String.valueOf(progress) + "%";
                             tvConvertProgress.setText(s);
                         }
+                        break;
+                    case MSG_SCANFINISH:
+                        File f = new File(mp4path);
+                        String str="文件路径:"+mp4path+"\n文件大小:"+Utils.size2String(f.length())+"\n\n是否预览？";
+                        new AlertDialog.Builder(Gif2Mp4Activity.this).setTitle("转换完成").setMessage(str).setPositiveButton("是", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                Intent intent=new Intent();
+                                intent.setAction(Intent.ACTION_VIEW);
+                                intent.setDataAndType(Uri.parse(mp4path),"video/mp4");
+                                startActivity(intent);
+                            }
+                        }).setNegativeButton("否",null).show();
                         break;
                 }
                 return false;
@@ -352,39 +378,39 @@ public class Gif2Mp4Activity extends AppCompatActivity {
                 }).start();
             }
         }, 320);
-        waitdialog = new AlertDialog.Builder(this).setView(View.inflate(this, R.layout.waitingreadgifframes, null)).setCancelable(false).create();
+        waitdialog = new AlertDialog.Builder(this).setView(View.inflate(this, R.layout.waitinglayout, null)).setCancelable(false).create();
         Objects.requireNonNull(getSupportActionBar()).setElevation(0);
         listView = findViewById(R.id.g2mconfiglistview);
         listView.setLayoutManager(new LinearLayoutManager(this));
-        listView.addItemDecoration(new RecyclerView.ItemDecoration() {
-            @Override
-            public void onDraw(Canvas c, RecyclerView parent, RecyclerView.State state) {
-                super.onDraw(c, parent, state);
-                Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
-                p.setColor(getColor(R.color.colorPrimary));
-                int cnt = parent.getChildCount();
-                for (int i = 2; i < cnt; i++) {
-                    View item = parent.getChildAt(i);
-                    c.drawLine(item.getX(), item.getY() + item.getHeight(), item.getX() + item.getWidth(), item.getY() + item.getHeight(), p);
-                    if (i == 2) {
-                        int d = ((ViewGroup.MarginLayoutParams) item.getLayoutParams()).topMargin;
-                        Paint p2 = new Paint(Paint.ANTI_ALIAS_FLAG);
-                        p2.setStyle(Paint.Style.STROKE);
-                        Point size = new Point();
-                        getWindowManager().getDefaultDisplay().getSize(size);
-                        float y = size.x / 59f;
-                        float x = 5 * y;
-                        p2.setPathEffect(new DashPathEffect(new float[]{x, y}, 0));
-                        p2.setColor(getColor(R.color.colorPrimary));
-                        p2.setStrokeWidth(d / 4);
-                        Path path = new Path();
-                        path.moveTo(item.getX(), item.getY() - d * 5 / 8);
-                        path.lineTo(item.getX() + item.getWidth(), item.getY() - d * 5 / 8);
-                        c.drawPath(path, p2);
-                    }
-                }
-            }
-        });
+//        listView.addItemDecoration(new RecyclerView.ItemDecoration() {
+//            @Override
+//            public void onDraw(Canvas c, RecyclerView parent, RecyclerView.State state) {
+//                super.onDraw(c, parent, state);
+//                Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
+//                p.setColor(getColor(R.color.colorPrimary));
+//                int cnt = parent.getChildCount();
+//                for (int i = 2; i < cnt; i++) {
+//                    View item = parent.getChildAt(i);
+//                    c.drawLine(item.getX(), item.getY() + item.getHeight(), item.getX() + item.getWidth(), item.getY() + item.getHeight(), p);
+//                    if (i == 2) {
+//                        int d = ((ViewGroup.MarginLayoutParams) item.getLayoutParams()).topMargin;
+//                        Paint p2 = new Paint(Paint.ANTI_ALIAS_FLAG);
+//                        p2.setStyle(Paint.Style.STROKE);
+//                        Point size = new Point();
+//                        getWindowManager().getDefaultDisplay().getSize(size);
+//                        float y = size.x / 59f;
+//                        float x = 5 * y;
+//                        p2.setPathEffect(new DashPathEffect(new float[]{x, y}, 0));
+//                        p2.setColor(getColor(R.color.colorPrimary));
+//                        p2.setStrokeWidth(d / 4);
+//                        Path mp4path = new Path();
+//                        mp4path.moveTo(item.getX(), item.getY() - d * 5 / 8);
+//                        mp4path.lineTo(item.getX() + item.getWidth(), item.getY() - d * 5 / 8);
+//                        c.drawPath(mp4path, p2);
+//                    }
+//                }
+//            }
+//        });
         gifpath = getIntent().getStringExtra("gifpath");
         adapter = new G2MConfigAdapter(this, gifpath);
         SharedPreferences preferences = getSharedPreferences("gif2mp4", MODE_PRIVATE);

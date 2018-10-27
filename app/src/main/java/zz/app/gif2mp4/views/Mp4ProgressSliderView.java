@@ -18,11 +18,16 @@ import zz.app.gif2mp4.R;
 import zz.app.gif2mp4.interfaces.OnMp4ProgressSliderListener;
 
 public class Mp4ProgressSliderView extends View {
+
+    public void setDEBUG(boolean DEBUG) {
+        this.DEBUG = DEBUG;
+    }
+
     boolean DEBUG=false;
     final Paint paint;
     int progressColor;
     int boundColor;
-    static final int SCALE = 1000000;
+    public static final int SCALE = 1000000;
     int width;
 
     public int getLbound() {
@@ -31,6 +36,16 @@ public class Mp4ProgressSliderView extends View {
 
     public int getRbound() {
         return rbound;
+    }
+
+    public void setLbound(int lbound) {
+        this.lbound = lbound;
+        invalidate();
+    }
+
+    public void setRbound(int rbound) {
+        this.rbound = rbound;
+        invalidate();
     }
 
     int lbound = 0;
@@ -53,6 +68,7 @@ public class Mp4ProgressSliderView extends View {
     final int roundy = 25;
     final int pinwidth = 5;
     final int boundpadding=25;
+    final int boundpaddingsmall=5;
     Path leftBoundPath, rightBoundPath,barPath;
     Region leftBoundRegion, rightBoundRegion,barRegion;
     private int offsetX;
@@ -148,7 +164,7 @@ public class Mp4ProgressSliderView extends View {
         paint.setColor(changeColor(boundColor));
         canvas.drawPath(leftBoundPath, paint);
         leftBoundRegion.set(lbound * (width - 2 * boundWidth) / SCALE-boundpadding,offsetY+(totalheight - height) / 2-boundpadding,
-                lbound * (width - 2 * boundWidth) / SCALE+ boundWidth,offsetY+2 * height+(totalheight - height) / 2+boundpadding);
+                lbound * (width - 2 * boundWidth) / SCALE+ boundWidth+boundpaddingsmall,offsetY+2 * height+(totalheight - height) / 2+boundpadding);
         if(DEBUG) {
             paint.setColor(Color.GREEN);
             canvas.drawRect(leftBoundRegion.getBounds(), paint);
@@ -166,7 +182,7 @@ public class Mp4ProgressSliderView extends View {
         paint.setStyle(Paint.Style.STROKE);
         paint.setColor(changeColor(boundColor));
         canvas.drawPath(rightBoundPath, paint);
-        rightBoundRegion.set(rbound * (width - 2 * boundWidth) / SCALE+boundWidth,offsetY+(totalheight - height) / 2-boundpadding,
+        rightBoundRegion.set(rbound * (width - 2 * boundWidth) / SCALE+boundWidth-boundpaddingsmall,offsetY+(totalheight - height) / 2-boundpadding,
                 rbound * (width - 2 * boundWidth) / SCALE+2*boundWidth+boundpadding,offsetY+2 * height+(totalheight - height) / 2+boundpadding);
         if(DEBUG) {
             paint.setColor(Color.GREEN);

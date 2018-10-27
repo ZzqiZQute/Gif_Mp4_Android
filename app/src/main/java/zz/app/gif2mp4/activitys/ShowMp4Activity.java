@@ -10,6 +10,8 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.transition.Transition;
+import android.transition.TransitionInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -54,6 +56,8 @@ public class ShowMp4Activity extends AppCompatActivity implements SwipeRefreshLa
     }
 
     private void init() {
+        Transition transition = TransitionInflater.from(this).inflateTransition(R.transition.fade);
+        getWindow().setEnterTransition(transition);
         sortmethod = getResources().getStringArray(R.array.sort_type);
         handler = new Handler(new Handler.Callback() {
             @Override
@@ -108,18 +112,16 @@ public class ShowMp4Activity extends AppCompatActivity implements SwipeRefreshLa
                             @Override
                             public void run() {
                                 int pos = manager.findFirstVisibleItemPosition();
-                                int cnt=adapter.getItemCount();
+                                int cnt = adapter.getItemCount();
                                 adapter.setPlayindex(pos);
-                                if(adapter.getLastplayindex()!=adapter.getPlayindex()){
+                                if (adapter.getLastplayindex() != adapter.getPlayindex()) {
                                     MediaPlayer player = adapter.getMediaPlayer();
                                     if (player != null) player.release();
                                     adapter.setLastplayindex(adapter.getPlayindex());
                                     adapter.notifyDataSetChanged();
                                 }
                             }
-                        },100);
-
-
+                        }, 100);
 
 
                 }
@@ -136,7 +138,8 @@ public class ShowMp4Activity extends AppCompatActivity implements SwipeRefreshLa
 
     @Override
     public void go() {
-        adapter.getMediaPlayer().start();
+        if (adapter.getMediaPlayer() != null)
+            adapter.getMediaPlayer().start();
     }
 
     @Override
@@ -229,8 +232,8 @@ public class ShowMp4Activity extends AppCompatActivity implements SwipeRefreshLa
 
     @Override
     public void onBackPressed() {
-        MediaPlayer player=adapter.getMediaPlayer();
-        if(player!=null){
+        MediaPlayer player = adapter.getMediaPlayer();
+        if (player != null) {
             player.release();
         }
         super.onBackPressed();

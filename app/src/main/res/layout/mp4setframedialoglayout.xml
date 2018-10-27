@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:orientation="vertical">
+    <EditText
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="帧率(小于60 例:25.0)"
+        android:singleLine="true"
+        android:layout_marginLeft="30dp"
+        android:layout_marginRight="30dp"
+
+        android:layout_marginBottom="10dp"
+        android:layout_marginTop="10dp"
+        android:id="@+id/etfps"
+        android:inputType="numberDecimal"
+ />
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAlignment="center"
+        android:layout_marginLeft="30dp"
+        android:layout_marginRight="30dp"
+        android:layout_gravity="end"
+        android:layout_marginBottom="10dp"
+        android:layout_marginTop="10dp"
+        android:text="帧率影响输出文件的大小，且帧率不会大于原始视频帧率"/>
+
+
+</LinearLayout>

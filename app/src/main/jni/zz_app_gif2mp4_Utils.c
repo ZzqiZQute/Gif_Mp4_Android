@@ -436,7 +436,7 @@ JNIEXPORT jint JNICALL Java_zz_app_gif2mp4_Utils_gif2mp4
 }
 
 JNIEXPORT jint JNICALL Java_zz_app_gif2mp4_Utils_mp42gif
-(JNIEnv * env, jclass cls, jstring mp4path, jstring gifpath, jint _fps, jint _rotate, jint _width, jint _height, jdouble _start, jdouble _end)
+(JNIEnv * env, jclass cls, jstring mp4path, jstring gifpath, jdouble _fps, jint _rotate, jint _width, jint _height, jdouble _start, jdouble _end)
 {
   progress = 0;
   char	*input	= jstringToChar( env, mp4path );
@@ -486,7 +486,12 @@ JNIEXPORT jint JNICALL Java_zz_app_gif2mp4_Utils_mp42gif
   if((m = av_dict_get(video_stream->metadata, "rotate", m, AV_DICT_IGNORE_SUFFIX)) != NULL) {
     rotate=atoi(m->value);
   }
-  rotate+=_rotate;
+  int _rotate_;
+  if(_rotate==0)_rotate_=0;
+  else if(_rotate==1)_rotate_=90;
+  else if(_rotate==2)_rotate_=180;
+  else if(_rotate==3)_rotate_=-90;
+  rotate+=_rotate_;
   if (rotate < 0)
     rotate += 360;
   else if(rotate>360)
@@ -507,10 +512,8 @@ JNIEXPORT jint JNICALL Java_zz_app_gif2mp4_Utils_mp42gif
   AVStream* out_stream = avformat_new_stream(outfmtctx, NULL);
   AVCodec* c2 = avcodec_find_encoder(outfmtctx->oformat->video_codec);
   encctx = avcodec_alloc_context3(NULL);
-
   encctx->width = output_w;
   encctx->height = output_h;
-
   encctx->codec_id = outfmtctx->oformat->video_codec;
   encctx->codec_type = AVMEDIA_TYPE_VIDEO;
   encctx->pix_fmt = AV_PIX_FMT_BGR8;
@@ -580,7 +583,9 @@ JNIEXPORT jint JNICALL Java_zz_app_gif2mp4_Utils_mp42gif
         goto FLUSH;
 
       }
+      LOGD("current=%f start=%f end=%f",current_time,start_,end_);
       progress = (current_time-start_) * 100 / (end_-start_);
+
       jclass		clazz		= (*env)->FindClass( env, "zz/app/gif2mp4/Utils" );
       jmethodID	methodID	= (*env)->GetStaticMethodID( env, clazz, "setProgress2", "(I)V" );
       (*env)->CallStaticVoidMethod( env, cls, methodID, progress );
@@ -589,7 +594,7 @@ JNIEXPORT jint JNICALL Java_zz_app_gif2mp4_Utils_mp42gif
       frame2->format = encctx->pix_fmt;
       frame3->format = encctx->pix_fmt;
 
-      av_frame_get_buffer(frame2, 32);
+      av_frame_get_buffer(frame2, 1);
       sws_scale(swsctx, (const uint8_t * const*)frame->data, frame->linesize, 0, frame2->height, frame2->data, frame2->linesize);
       av_frame_unref(frame);
 
@@ -598,14 +603,14 @@ JNIEXPORT jint JNICALL Java_zz_app_gif2mp4_Utils_mp42gif
       {
         frame3->width = frame2->width;
         frame3->height = frame2->height;
-        av_frame_get_buffer(frame3, 32);
+        av_frame_get_buffer(frame3, 1);
         av_frame_copy(frame3, frame2);
       }
       else if (rotate == 90)
       {
         frame3->width = frame2->height;
         frame3->height = frame2->width;
-        av_frame_get_buffer(frame3, 32);
+        av_frame_get_buffer(frame3, 1);
 
         for ( ii = 0; ii < frame3->width; ii++)
           for ( jj = 0; jj < frame3->height; jj++) {
@@ -617,7 +622,7 @@ JNIEXPORT jint JNICALL Java_zz_app_gif2mp4_Utils_mp42gif
       {
         frame3->width = frame2->width;
         frame3->height = frame2->height;
-        av_frame_get_buffer(frame3, 32);
+        av_frame_get_buffer(frame3, 1);
 
 
         for ( ii = 0; ii < frame3->width; ii++)
@@ -629,7 +634,7 @@ JNIEXPORT jint JNICALL Java_zz_app_gif2mp4_Utils_mp42gif
       {
         frame3->width = frame2->height;
         frame3->height = frame2->width;
-        av_frame_get_buffer(frame3, 32);
+        av_frame_get_buffer(frame3, 1);
 
         for ( ii = 0; ii < frame3->width; ii++)
           for ( jj = 0; jj < frame3->height; jj++) {
@@ -640,7 +645,7 @@ JNIEXPORT jint JNICALL Java_zz_app_gif2mp4_Utils_mp42gif
       frame4->width = output_w;
       frame4->height = output_h;
       frame4->format = AV_PIX_FMT_BGR8;
-      av_frame_get_buffer(frame4,32);
+      av_frame_get_buffer(frame4,1);
       sws_scale(swsctx2, (const uint8_t * const*)frame3->data, frame3->linesize, 0, frame3->height, frame4->data, frame4->linesize);
       av_frame_unref(frame3);
       pts_sum += ptsdelta;
@@ -699,6 +704,7 @@ FLUSH:
   free( output );
   return SUCCESSCODE;
 FAIL:
+  avio_close( outfmtctx->pb );
   sws_freeContext( swsctx );
   sws_freeContext( swsctx2 );
   avcodec_free_context( &decctx );
@@ -712,49 +718,98 @@ FAIL:
   return GIF2MP4_UNKNOWN_ERROR;
 }
 JNIEXPORT jintArray JNICALL Java_zz_app_gif2mp4_Utils_getMp4Size
-  (JNIEnv *env, jclass cls, jstring path){
+(JNIEnv *env, jclass cls, jstring path) {
 
-    char		*input		= jstringToChar( env, path );
-    int ret[2];
-    AVFormatContext * inputFmtCtx	= avformat_alloc_context();
-    int err;
-    err=avformat_open_input( &inputFmtCtx, input, NULL, NULL );
-    if(err<0)return NULL;
-    err=avformat_find_stream_info( inputFmtCtx, NULL );
-    if(err<0)return NULL;
-    int	vsnb	= -1;
-    int	i	= 0, j = 0, k = 0;
-    float	sum	= 0;
-    int rotate=0;
-    for (; i < inputFmtCtx->nb_streams; i++ )
+  char		*input		= jstringToChar( env, path );
+  int ret[2];
+  AVFormatContext * inputFmtCtx	= avformat_alloc_context();
+  int err;
+  err=avformat_open_input( &inputFmtCtx, input, NULL, NULL );
+  if(err<0)return NULL;
+  err=avformat_find_stream_info( inputFmtCtx, NULL );
+  if(err<0)return NULL;
+  int	vsnb	= -1;
+  int	i	= 0, j = 0, k = 0;
+  float	sum	= 0;
+  int rotate=0;
+  for (; i < inputFmtCtx->nb_streams; i++ )
+  {
+    if ( inputFmtCtx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO )
     {
-      if ( inputFmtCtx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO )
-      {
-        vsnb = i;
-        break;
-      }
+      vsnb = i;
+      break;
     }
-    if ( vsnb != -1 )
+  }
+  if ( vsnb != -1 )
+  {
+    AVDictionaryEntry *m = NULL;
+    if((m = av_dict_get(inputFmtCtx->streams[vsnb]->metadata, "rotate", m, AV_DICT_IGNORE_SUFFIX)) != NULL) {
+      rotate=atoi(m->value);
+    }
+    if(rotate==0||rotate==180)
     {
-      AVDictionaryEntry *m = NULL;
-      if((m = av_dict_get(inputFmtCtx->streams[vsnb]->metadata, "rotate", m, AV_DICT_IGNORE_SUFFIX)) != NULL) {
-        rotate=atoi(m->value);
-      }
-      if(rotate==0||rotate==180)
-      {
       ret[0]= inputFmtCtx->streams[vsnb]->codecpar->width;
       ret[1]=inputFmtCtx->streams[vsnb]->codecpar->height;
-      }
-      else if(rotate==90||rotate==270||rotate==-90 )
-      {
-      ret[0]= inputFmtCtx->streams[vsnb]->codecpar->height;
-            ret[1]=inputFmtCtx->streams[vsnb]->codecpar->width;
-      }
     }
-
-    free( input );
-    avformat_free_context( inputFmtCtx );
-    jintArray arr=(*env)->NewIntArray(env,2);
-    (*env)->SetIntArrayRegion(env,arr,0,2,ret);
-    return arr;
+    else if(rotate==90||rotate==270||rotate==-90 )
+    {
+      ret[0]= inputFmtCtx->streams[vsnb]->codecpar->height;
+      ret[1]=inputFmtCtx->streams[vsnb]->codecpar->width;
+    }
   }
+
+  free( input );
+  avformat_free_context( inputFmtCtx );
+  jintArray arr=(*env)->NewIntArray(env,2);
+  (*env)->SetIntArrayRegion(env,arr,0,2,ret);
+  return arr;
+}
+JNIEXPORT jlongArray JNICALL Java_zz_app_gif2mp4_Utils_getMp4Info
+(JNIEnv * env, jclass cls, jstring path)
+{
+  char		*input		= jstringToChar( env, path );
+  jlong ret[4];
+  AVFormatContext * inputFmtCtx	= avformat_alloc_context();
+  int err;
+  err=avformat_open_input( &inputFmtCtx, input, NULL, NULL );
+  if(err<0)return NULL;
+  err=avformat_find_stream_info( inputFmtCtx, NULL );
+  if(err<0)return NULL;
+  int	vsnb	= -1;
+  int	i	= 0, j = 0, k = 0;
+  float	sum	= 0;
+  int rotate=0;
+  for (; i < inputFmtCtx->nb_streams; i++ )
+  {
+    if ( inputFmtCtx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO )
+    {
+      vsnb = i;
+      break;
+    }
+  }
+  if ( vsnb != -1 )
+  {
+    AVDictionaryEntry *m = NULL;
+    if((m = av_dict_get(inputFmtCtx->streams[vsnb]->metadata, "rotate", m, AV_DICT_IGNORE_SUFFIX)) != NULL) {
+      rotate=atoi(m->value);
+    }
+    if(rotate==0||rotate==180)
+    {
+      ret[0]= inputFmtCtx->streams[vsnb]->codecpar->width;
+      ret[1]=inputFmtCtx->streams[vsnb]->codecpar->height;
+    }
+    else if(rotate==90||rotate==270||rotate==-90 )
+    {
+      ret[0]= inputFmtCtx->streams[vsnb]->codecpar->height;
+      ret[1]=inputFmtCtx->streams[vsnb]->codecpar->width;
+    }
+  }
+  ret[2]=inputFmtCtx->streams[vsnb]->nb_frames;
+  ret[3]=(jlong)(inputFmtCtx->streams[vsnb]->avg_frame_rate.num)*1000/inputFmtCtx->streams[vsnb]->avg_frame_rate.den;
+
+  free( input );
+  avformat_free_context( inputFmtCtx );
+  jlongArray arr=(*env)->NewLongArray(env,4);
+  (*env)->SetLongArrayRegion(env,arr,0,4,ret);
+  return arr;
+}

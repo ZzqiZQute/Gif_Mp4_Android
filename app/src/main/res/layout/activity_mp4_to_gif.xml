@@ -1,138 +1,215 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:tools="http://schemas.android.com/tools"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical">
 
 
     <android.support.v7.widget.Toolbar
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:title="输出配置"
+        android:background="@color/colorPrimary"
         android:elevation="0dp"
-        app:titleTextColor="@android:color/white"
-        android:background="@color/colorPrimary">
+        app:title="输出配置"
+        app:titleTextColor="@android:color/white">
 
     </android.support.v7.widget.Toolbar>
 
-<zz.app.gif2mp4.layouts.YellowStyleFrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context=".activitys.Mp42GifActivity">
-    <FrameLayout
+    <zz.app.gif2mp4.layouts.YellowStyleFrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        xmlns:tools="http://schemas.android.com/tools"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
-            <RelativeLayout
-                android:layout_width="match_parent"
-                android:layout_height="250dp"
-                android:background="@color/colorPrimary"
-               >
-                <FrameLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:layout_centerInParent="true"
-                    android:layout_margin="@dimen/tendp"
-                    android:background="@android:color/white">
+        android:layout_height="match_parent"
+        tools:context=".activitys.Mp42GifActivity">
 
-                </FrameLayout>
-                <TextureView
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:layout_centerInParent="true"
-                    android:layout_margin="@dimen/tendp"
-                    />
-            </RelativeLayout>
-            <RelativeLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_margin="@dimen/tendp">
-                <ImageButton
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:layout_alignParentEnd="true"
-                    android:layout_centerVertical="true"
-                    android:scaleType="centerInside"
-                    android:id="@+id/btnPlaypause"
-                    android:background="@android:color/transparent"
-                    android:src="@drawable/pause"
-                    android:contentDescription="@string/str_playpause" />
-                <zz.app.gif2mp4.views.Mp4ProgressSliderView
-                    android:layout_width="match_parent"
-                    android:layout_height="60dp"
-                    app:boundColor="@color/colorAccent"
-                    android:layout_toStartOf="@id/btnPlaypause"
-                    app:progressColor="@color/colorPrimary"
-                    app:topoffset="-40"
-                    android:id="@+id/mp4progress"/>
-            </RelativeLayout>
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal">
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="50dp"
-                    android:layout_weight="1"
-                    android:textAlignment="center"
-                    android:gravity="center"
-                    android:id="@+id/tvleft"
-                    android:textColor="@android:color/black"
-                    android:background="?attr/selectableItemBackground"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:text="00:00.000"/>
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="50dp"
-                    android:layout_weight="1"
-                    android:textAlignment="center"
-                    android:id="@+id/tvcurrent"
-                    android:gravity="center"
-                    android:textColor="@android:color/black"
-                    android:text="00:00.000"/>
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="50dp"
-                    android:layout_weight="1"
-                    android:textAlignment="center"
-                    android:id="@+id/tvright"
-                    android:gravity="center"
-                    android:background="?attr/selectableItemBackground"
-                    android:textColor="@android:color/black"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:text="00:00.000"/>
+                android:orientation="vertical">
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="250dp"
+                    android:background="@color/colorPrimary">
+
+                    <FrameLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_centerInParent="true"
+                        android:layout_margin="@dimen/tendp"
+                        android:background="@android:color/white">
+
+                    </FrameLayout>
+
+                    <TextureView
+                        android:id="@+id/tvvideo"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_centerInParent="true"
+                        android:layout_margin="@dimen/tendp" />
+
+                    <ImageButton
+                        android:id="@+id/btnaudio"
+                        android:layout_width="25dp"
+                        android:layout_height="25dp"
+                        android:layout_alignParentEnd="true"
+                        android:layout_alignParentBottom="true"
+                        android:layout_margin="20dp"
+                        android:background="@android:color/transparent"
+                        android:contentDescription="@string/str_audio"
+                        android:scaleType="centerInside"
+                        android:src="@drawable/audiooff" />
+                </RelativeLayout>
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="@dimen/tendp">
+
+                    <ImageButton
+                        android:id="@+id/btnPlaypause"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:layout_alignParentEnd="true"
+                        android:layout_centerVertical="true"
+                        android:background="@android:color/transparent"
+                        android:contentDescription="@string/str_playpause"
+                        android:scaleType="centerInside"
+                        android:src="@drawable/pause" />
+
+                    <zz.app.gif2mp4.views.Mp4ProgressSliderView
+                        android:id="@+id/mp4progress"
+                        android:layout_width="match_parent"
+                        android:layout_height="60dp"
+                        android:layout_toStartOf="@id/btnPlaypause"
+                        app:boundColor="@color/colorAccent"
+                        app:progressColor="@color/colorPrimary"
+                        app:topoffset="-40" />
+                </RelativeLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="25dp"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:text="@string/str_left_bound"
+                        android:textAlignment="center"
+                        android:textColor="@android:color/black" />
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="25dp"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:text="@string/str_current"
+                        android:textAlignment="center"
+                        android:textColor="@android:color/black" />
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="25dp"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:text="@string/str_right_bound"
+                        android:textAlignment="center"
+                        android:textColor="@android:color/black" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/tvleft"
+                        android:layout_width="0dp"
+                        android:layout_height="50dp"
+                        android:layout_weight="1"
+                        android:background="?attr/selectableItemBackground"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center"
+                        android:text="@string/str_defaulttime"
+                        android:textAlignment="center"
+                        android:textColor="@android:color/black" />
+
+                    <TextView
+                        android:id="@+id/tvcurrent"
+                        android:layout_width="0dp"
+                        android:layout_height="50dp"
+                        android:layout_weight="1"
+                        android:background="?attr/selectableItemBackground"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center"
+                        android:text="@string/str_defaulttime"
+                        android:textAlignment="center"
+                        android:textColor="@android:color/black" />
+
+                    <TextView
+                        android:id="@+id/tvright"
+                        android:layout_width="0dp"
+                        android:layout_height="50dp"
+                        android:layout_weight="1"
+                        android:background="?attr/selectableItemBackground"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center"
+                        android:text="@string/str_defaulttime"
+                        android:textAlignment="center"
+                        android:textColor="@android:color/black" />
+                </LinearLayout>
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
+
+                    <FrameLayout
+                        android:id="@+id/layoutconvert"
+                        android:layout_width="match_parent"
+                        android:layout_height="100dp"
+                        android:layout_alignParentBottom="true">
+
+                        <RelativeLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent">
+
+                            <Button
+                                android:id="@+id/btnoutput"
+                                android:layout_width="150dp"
+                                android:layout_height="60dp"
+                                android:layout_alignParentEnd="true"
+                                android:layout_margin="10dp"
+                                android:background="@drawable/outputdrawable"
+                                android:text="@string/str_convert"
+                                />
+                        </RelativeLayout>
+
+                    </FrameLayout>
+
+                    <android.support.v7.widget.RecyclerView
+                        android:id="@+id/rvconfig"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_above="@id/layoutconvert">
+
+                    </android.support.v7.widget.RecyclerView>
+                </RelativeLayout>
+
+
             </LinearLayout>
-            <RelativeLayout
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
-                <FrameLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="120dp"
-                    android:id="@+id/layoutconvert"
-                    android:layout_alignParentBottom="true">
+        </FrameLayout>
 
-                </FrameLayout>
-                <android.support.v7.widget.RecyclerView
-                    android:id="@+id/rvconfig"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:layout_above="@id/layoutconvert">
-
-                </android.support.v7.widget.RecyclerView>
-            </RelativeLayout>
-
-
-        </LinearLayout>
-    </FrameLayout>
-
-</zz.app.gif2mp4.layouts.YellowStyleFrameLayout>
+    </zz.app.gif2mp4.layouts.YellowStyleFrameLayout>
 </LinearLayout>

@@ -11,6 +11,7 @@ import android.graphics.Point;
 import android.graphics.SurfaceTexture;
 import android.graphics.drawable.BitmapDrawable;
 import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v7.widget.CardView;
@@ -28,6 +29,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Objects;
@@ -48,6 +50,7 @@ public class Mp4ListViewAdapter extends RecyclerView.Adapter<Mp4ListViewAdapter.
     private ArrayList<Mp4Info> thumbnailMap;
     private ArrayList<String> showfiles;
     private Context context;
+
 
     public MediaPlayer getMediaPlayer() {
         return mediaPlayer;
@@ -103,6 +106,7 @@ public class Mp4ListViewAdapter extends RecyclerView.Adapter<Mp4ListViewAdapter.
     @Override
     public void onBindViewHolder(final ViewHolder viewHolder, int i) {
         if (i > 0 && i < showfiles.size() + 1) {
+
             viewHolder.baudio = false;
             viewHolder.btnAudio.setImageDrawable(new BitmapDrawable(context.getResources(), BitmapFactory.decodeResource(context.getResources(), R.drawable.audiooff)));
             final float start = viewHolder.cardView.getCardElevation();
@@ -176,7 +180,8 @@ public class Mp4ListViewAdapter extends RecyclerView.Adapter<Mp4ListViewAdapter.
                         mediaPlayer = new MediaPlayer();
                         mediaPlayer.setSurface(new Surface(surface));
                         try {
-                            mediaPlayer.setDataSource(path);
+                            FileInputStream inputStream = new FileInputStream(new File(path));
+                            mediaPlayer.setDataSource(inputStream.getFD());
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
@@ -244,9 +249,6 @@ public class Mp4ListViewAdapter extends RecyclerView.Adapter<Mp4ListViewAdapter.
 
                         textureView.setTransform(matrix);
                     }
-
-                    //  Toast.makeText(context,"width="+width+",height="+height+"\ntwidth="+(size.x-2*margin)+",theight="+(size.x*3/4-2*margin),Toast.LENGTH_SHORT).go();
-
                     layout.addView(textureView);
                     viewHolder.tvLoadingHint.setVisibility(View.INVISIBLE);
                     viewHolder.flvideowrapper.addView(layout, 1);
@@ -274,17 +276,20 @@ public class Mp4ListViewAdapter extends RecyclerView.Adapter<Mp4ListViewAdapter.
 
                 }
             });
+
             viewHolder.cardView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(final View v) {
                     try {
-                        mediaPlayer.pause();
-                    }catch (IllegalArgumentException ignored){
+                        if (mediaPlayer != null)
+                            mediaPlayer.pause();
+                    } catch (IllegalArgumentException ignored) {
 
                     }
                     Intent intent = new Intent(context, Mp42GifActivity.class);
-                    Bundle bundle=ActivityOptions.makeSceneTransitionAnimation((ShowMp4Activity)context).toBundle();
-                    context.startActivity(intent,bundle);
+                    Bundle bundle = ActivityOptions.makeSceneTransitionAnimation((ShowMp4Activity) context).toBundle();
+                    intent.putExtra("mp4path", path);
+                    context.startActivity(intent, bundle);
                     Utils.getManager().mp42gifhandler = new ActivityTransitionController((ShowMp4Activity) context);
                     Utils.getManager().mp42gifhandler.setShowListener(new ActivityTransitionController.ShowListener() {
                         @Override
@@ -300,6 +305,7 @@ public class Mp4ListViewAdapter extends RecyclerView.Adapter<Mp4ListViewAdapter.
                     });
                 }
             });
+
         } else {
             if (ready) {
                 viewHolder.tvHint.setVisibility(View.VISIBLE);

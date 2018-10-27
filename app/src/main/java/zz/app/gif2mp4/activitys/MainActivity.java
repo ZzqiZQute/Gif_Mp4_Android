@@ -1,11 +1,14 @@
 package zz.app.gif2mp4.activitys;
 
+import android.app.ActivityOptions;
 import android.content.Intent;
 import android.media.MediaMetadataRetriever;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
+
+import java.util.Objects;
 
 import zz.app.gif2mp4.R;
 import zz.app.gif2mp4.Utils;
@@ -34,12 +37,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initView() {
+        Objects.requireNonNull(getSupportActionBar()).setElevation(0);
         btngif2mp4=findViewById(R.id.btngif2mp4);
         btngif2mp4.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Intent intent=new Intent(MainActivity.this,ShowGifActivity.class);
-                startActivity(intent);
+                Bundle bundle=ActivityOptions.makeSceneTransitionAnimation(MainActivity.this).toBundle();
+                startActivity(intent,bundle);
             }
         });
         btnmp42gif=findViewById(R.id.btnmp42gif);
@@ -47,7 +52,8 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 Intent intent=new Intent(MainActivity.this,ShowMp4Activity.class);
-                startActivity(intent);
+                Bundle bundle=ActivityOptions.makeSceneTransitionAnimation(MainActivity.this).toBundle();
+                startActivity(intent,bundle);
             }
         });
     }

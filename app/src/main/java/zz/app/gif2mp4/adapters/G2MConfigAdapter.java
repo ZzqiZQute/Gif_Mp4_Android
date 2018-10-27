@@ -187,7 +187,7 @@ public class G2MConfigAdapter extends RecyclerView.Adapter<G2MConfigAdapter.View
             viewHolder.tvoptionvalue.setTextAlignment(View.TEXT_ALIGNMENT_TEXT_END);
             viewHolder.tvoptionname.setText("详细信息");
             if (gifframes == 0)
-                viewHolder.tvoptionvalue.setText("???");
+                viewHolder.tvoptionvalue.setText("?");
             else {
                 String s = String.format(Locale.getDefault(), "帧数:%d 帧率:%.1f/s\n时长:%.1fs 大小:%s", gifframes, gifrate, gifframes / gifrate, Utils.size2String(FileUtils.sizeOf(new File(gifpath))));
                 viewHolder.tvoptionvalue.setText(s);
@@ -267,7 +267,7 @@ public class G2MConfigAdapter extends RecyclerView.Adapter<G2MConfigAdapter.View
             viewHolder.itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    View view1 = View.inflate(context, R.layout.bitratesettingdialoglayout, null);
+                    View view1 = View.inflate(context, R.layout.gifsetbitratedialoglayout, null);
                     final EditText editText = view1.findViewById(R.id.etbitrate);
                     new AlertDialog.Builder(context).setTitle("比特率").setView(view1).setPositiveButton("确定", new DialogInterface.OnClickListener() {
                         @Override
@@ -293,7 +293,7 @@ public class G2MConfigAdapter extends RecyclerView.Adapter<G2MConfigAdapter.View
         } else if (i == 4) {
             viewHolder.tvoptionname.setText("持续时间");
             if (outputtime == 0)
-                viewHolder.tvoptionvalue.setText("???");
+                viewHolder.tvoptionvalue.setText("?");
             else {
                 BigDecimal decimal = new BigDecimal(predicttime / outputtime).setScale(2, RoundingMode.HALF_UP);
                 String s = String.valueOf(outputtime) + "s(" + decimal.doubleValue() + "×)";
@@ -302,7 +302,7 @@ public class G2MConfigAdapter extends RecyclerView.Adapter<G2MConfigAdapter.View
             viewHolder.itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    View view1 = View.inflate(context, R.layout.timesettinglayout, null);
+                    View view1 = View.inflate(context, R.layout.gifsettimelayout, null);
                     final EditText editText = view1.findViewById(R.id.ettime);
                     new AlertDialog.Builder(context).setTitle("持续时间").setView(view1).setPositiveButton("确定", new DialogInterface.OnClickListener() {
                         @Override
