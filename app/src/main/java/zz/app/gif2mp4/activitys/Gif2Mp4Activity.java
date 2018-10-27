@@ -326,17 +326,18 @@ public class Gif2Mp4Activity extends AppCompatActivity {
                         }
                         break;
                     case MSG_SCANFINISH:
-                        File f = new File(mp4path);
-                        String str="文件路径:"+mp4path+"\n文件大小:"+Utils.size2String(f.length())+"\n\n是否预览？";
+                        final File f = new File(mp4path);
+                        String str="文件路径:"+mp4path+"\n文件大小:"+Utils.size2String(f.length())+"\n\n是否保存？";
                         new AlertDialog.Builder(Gif2Mp4Activity.this).setTitle("转换完成").setMessage(str).setPositiveButton("是", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
-                                Intent intent=new Intent();
-                                intent.setAction(Intent.ACTION_VIEW);
-                                intent.setDataAndType(Uri.parse(mp4path),"video/mp4");
-                                startActivity(intent);
                             }
-                        }).setNegativeButton("否",null).show();
+                        }).setCancelable(false).setNegativeButton("否", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                FileUtils.deleteQuietly(f);
+                            }
+                        }).show();
                         break;
                 }
                 return false;

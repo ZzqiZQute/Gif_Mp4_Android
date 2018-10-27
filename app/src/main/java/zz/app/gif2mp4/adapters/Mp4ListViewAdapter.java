@@ -310,7 +310,7 @@ public class Mp4ListViewAdapter extends RecyclerView.Adapter<Mp4ListViewAdapter.
             if (ready) {
                 viewHolder.tvHint.setVisibility(View.VISIBLE);
                 if (i == 0) {
-                    String s = "选择下面的一个Mp4文件吧！！！";
+                    String s = "请选择以下Mp4文件";
                     viewHolder.tvHint.setText(s);
                 } else {
                     String s = "再怎么往下翻也没有了。。。";

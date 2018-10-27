@@ -170,7 +170,7 @@ public class GifListViewAdapter extends RecyclerView.Adapter<GifListViewAdapter.
             if(ready) {
                 viewHolder.tvHint.setVisibility(View.VISIBLE);
                 if (i == 0) {
-                    String s = "选择下面的一个Gif文件吧！！！";
+                    String s = "请选择以下Gif文件";
                     viewHolder.tvHint.setText(s);
                 } else {
                     String s = "再怎么往下翻也没有了。。。";

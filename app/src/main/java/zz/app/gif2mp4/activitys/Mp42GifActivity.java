@@ -138,19 +138,19 @@ public class Mp42GifActivity extends AppCompatActivity {
                         }
                         break;
                     case MSG_SCANFINISH:
-                        File f = new File(gifpath);
-                        String str = "文件路径:" + gifpath + "\n文件大小:" + Utils.size2String(f.length());
-//                        new AlertDialog.Builder(Mp42GifActivity.this).setTitle("转换完成").setMessage(str).setPositiveButton("是", new DialogInterface.OnClickListener() {
-//                            @Override
-//                            public void onClick(DialogInterface dialog, int which) {
-//                                Intent intent = new Intent();
-//                                intent.setAction(Intent.ACTION_VIEW);
-//                                intent.setDataAndType(Uri.parse(gifpath), "image/*");
-//                                startActivity(intent);
-//                            }
-//                        }).setNegativeButton("否", null).show();
-//                        break;
-                        Toast.makeText(Mp42GifActivity.this, str, Toast.LENGTH_SHORT).show();
+                        final File f = new File(gifpath);
+                        String str = "文件路径:" + gifpath + "\n文件大小:" + Utils.size2String(f.length())+"\n\n是否保存？";
+                        new AlertDialog.Builder(Mp42GifActivity.this).setTitle("转换完成").setMessage(str).setPositiveButton("是", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                            }
+                        }).setCancelable(false).setNegativeButton("否", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                FileUtils.deleteQuietly(f);
+                            }
+                        }).show();
+                        break;
                 }
                 return false;
             }
