@@ -47,7 +47,7 @@ include $(PREBUILT_SHARED_LIBRARY)
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := zzutils
-LOCAL_SRC_FILES := zz_app_gif2mp4_Utils.c
+LOCAL_SRC_FILES :=ffmpeg_opt.c ffmpeg.c cmdutils.c  ffmpeg_filter.c ffmpeg_hw.c zz_app_gif2mp4_Utils.c
 LOCAL_C_INCLUDES :=$(LOCAL_PATH)/include/
 LOCAL_LDLIBS := -llog -lz -ldl
 LOCAL_SHARED_LIBRARIES := avcodec-58 avformat-58 swscale-5 avutil-56 swresample-3 postproc-55 avdevice-58 avfilter-7 x264

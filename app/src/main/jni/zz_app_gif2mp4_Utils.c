@@ -8,7 +8,10 @@
 #include "libavutil/opt.h"
 #include "libswscale/swscale.h"
 #include "math.h"
+#include "ffmpeg.h"
+
 #define SUCCESSCODE	233
+#define FAILURECODE	235
 #define MP4TIMESCALE	60
 #define LOGD( ... )	__android_log_print( ANDROID_LOG_DEBUG, "gif2mp4_zz", __VA_ARGS__ )
 #define LOGE( ... )	__android_log_print( ANDROID_LOG_ERROR, "gif2mp4_zz", __VA_ARGS__ )

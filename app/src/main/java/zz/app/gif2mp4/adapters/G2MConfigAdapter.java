@@ -97,10 +97,10 @@ public class G2MConfigAdapter extends RecyclerView.Adapter<G2MConfigAdapter.View
         this.outputtime = outputtime;
     }
 
+
     public double getBitrate() {
         return bitrate;
     }
-
     public void setBitrate(double bitrate) {
         this.bitrate = bitrate;
     }

@@ -80,7 +80,18 @@ obj/local/armeabi/objs/zzutils/zz_app_gif2mp4_Utils.o: \
  jni/include/libavcodec/version.h jni/include/libavutil/version.h \
  jni/include/libavformat/avio.h jni/include/libavutil/common.h \
  jni/include/libavformat/version.h jni/include/libavutil/opt.h \
- jni/include/libswscale/swscale.h jni/include/libswscale/version.h
+ jni/include/libswscale/swscale.h jni/include/libswscale/version.h \
+ jni/ffmpeg.h jni/config.h jni/cmdutils.h \
+ jni/include/libavfilter/avfilter.h jni/include/libavfilter/version.h \
+ jni/include/libavformat/avio.h jni/include/libavutil/eval.h \
+ jni/include/libavutil/fifo.h jni/include/libavutil/thread.h \
+ jni/include/libavutil/config.h \
+ X:/Users/zz/Downloads/android-ndk-r10d/platforms/android-21/arch-arm/usr/include/pthread.h \
+ X:/Users/zz/Downloads/android-ndk-r10d/platforms/android-21/arch-arm/usr/include/sched.h \
+ X:/Users/zz/Downloads/android-ndk-r10d/platforms/android-21/arch-arm/usr/include/linux/sched.h \
+ jni/include/libavutil/threadmessage.h \
+ jni/include/libswresample/swresample.h \
+ jni/include/libswresample/version.h
 
 X:/Users/zz/Downloads/android-ndk-r10d/platforms/android-21/arch-arm/usr/include/unistd.h:
 
@@ -281,3 +292,35 @@ jni/include/libavutil/opt.h:
 jni/include/libswscale/swscale.h:
 
 jni/include/libswscale/version.h:
+
+jni/ffmpeg.h:
+
+jni/config.h:
+
+jni/cmdutils.h:
+
+jni/include/libavfilter/avfilter.h:
+
+jni/include/libavfilter/version.h:
+
+jni/include/libavformat/avio.h:
+
+jni/include/libavutil/eval.h:
+
+jni/include/libavutil/fifo.h:
+
+jni/include/libavutil/thread.h:
+
+jni/include/libavutil/config.h:
+
+X:/Users/zz/Downloads/android-ndk-r10d/platforms/android-21/arch-arm/usr/include/pthread.h:
+
+X:/Users/zz/Downloads/android-ndk-r10d/platforms/android-21/arch-arm/usr/include/sched.h:
+
+X:/Users/zz/Downloads/android-ndk-r10d/platforms/android-21/arch-arm/usr/include/linux/sched.h:
+
+jni/include/libavutil/threadmessage.h:
+
+jni/include/libswresample/swresample.h:
+
+jni/include/libswresample/version.h:
