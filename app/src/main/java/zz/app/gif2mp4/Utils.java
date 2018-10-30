@@ -4,13 +4,10 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Paint;
 import android.media.MediaMetadataRetriever;
 import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.util.Pair;
-import android.widget.ActionMenuView;
 import android.widget.Toast;
 
 import org.apache.commons.io.FileUtils;
@@ -26,7 +23,6 @@ import java.util.ArrayList;
 import java.util.Locale;
 
 import zz.app.gif2mp4.beans.Mp4Info;
-import zz.app.gif2mp4.controllers.ActivityTransitionController;
 import zz.app.gif2mp4.managers.ActivityTransitionManager;
 
 public class Utils {
@@ -65,7 +61,7 @@ public class Utils {
     public static final int GIF2MP4_H264_NOTFOUND = 1;
     public static final int GIF2MP4_NOT_ACTION = 2;
     public static final int SUCCESSCODE = 233;
-
+    public static final int FAILURECODE = 235;
     private static final String TAG = "Utils";
 
 
@@ -292,6 +288,8 @@ public class Utils {
     public static native int[] getMp4Size(String path);
 
     public static native long[] getMp4Info(String info);
+
+    public static native void ffmpegCommand(FFMpegCommand command);
 
     public static ArrayList<Mp4Info> getThumbnailMap(Context context, ArrayList<File> files) {
         ArrayList<Mp4Info> ret = new ArrayList<>();

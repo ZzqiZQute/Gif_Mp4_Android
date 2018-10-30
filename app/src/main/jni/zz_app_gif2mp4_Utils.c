@@ -10,8 +10,7 @@
 #include "math.h"
 #include "ffmpeg.h"
 
-#define SUCCESSCODE	233
-#define FAILURECODE	235
+
 #define MP4TIMESCALE	60
 #define LOGD( ... )	__android_log_print( ANDROID_LOG_DEBUG, "gif2mp4_zz", __VA_ARGS__ )
 #define LOGE( ... )	__android_log_print( ANDROID_LOG_ERROR, "gif2mp4_zz", __VA_ARGS__ )
@@ -435,7 +434,7 @@ JNIEXPORT jint JNICALL Java_zz_app_gif2mp4_Utils_gif2mp4
   LOGD( "av_dict_free complete successfully" );
   free( input );
   free( output );
-  return(SUCCESSCODE);
+  return(zz_app_gif2mp4_Utils_SUCCESSCODE);
 }
 
 JNIEXPORT jint JNICALL Java_zz_app_gif2mp4_Utils_mp42gif
@@ -705,7 +704,7 @@ FLUSH:
   avformat_free_context( outfmtctx );
   free( input );
   free( output );
-  return SUCCESSCODE;
+  return zz_app_gif2mp4_Utils_SUCCESSCODE;
 FAIL:
   avio_close( outfmtctx->pb );
   sws_freeContext( swsctx );
