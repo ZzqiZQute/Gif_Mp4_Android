@@ -636,7 +636,6 @@ static void ffmpeg_cleanup(int ret)
     nb_output_streams=0;
     nb_input_files=0;
     nb_input_streams=0;
-    ffmpeg_exited = 1;
 }
 
 void remove_avoptions(AVDictionary **a, AVDictionary *b)
@@ -4723,7 +4722,6 @@ static int transcode(void)
 
     /* finished ! */
     ret = 0;
-
  fail:
 #if HAVE_THREADS
     free_input_threads();
@@ -4790,27 +4788,12 @@ static int64_t getmaxrss(void)
 #endif
 }
 
-static void log_callback_null(void *ptr, int level, const char *fmt, va_list vl)
-{
-    static int print_prefix = 1;
-    static int count;
-    static char prev[1024];
-    char line[1024];
-    static int is_atty;
-    av_log_format_line(ptr, level, fmt, vl, line, sizeof(line), &print_prefix);
-    strcpy(prev, line);
-    if (level <= AV_LOG_WARNING){
-       // XLOGE("%s", line); 错误或警告
-    }else{
-      // Todo: X
-    }
-}
 
 int ffmpeg_run(int argc, char **argv)
 {
     int i, ret;
     int64_t ti;
-  
+
     init_dynload();
   
     register_exit(ffmpeg_cleanup);
@@ -4874,6 +4857,7 @@ int ffmpeg_run(int argc, char **argv)
     current_time = ti = getutime();
     if (transcode() < 0)
         exit_program(1);
+      av_log_set_callback(0);
     ti = getutime() - ti;
     if (do_benchmark) {
         //av_log(NULL, AV_LOG_INFO, "bench: utime=%0.3fs\n", ti / 1000000.0);
@@ -4886,6 +4870,7 @@ int ffmpeg_run(int argc, char **argv)
     if ((decode_error_stat[0] + decode_error_stat[1]) * max_error_rate < decode_error_stat[1])
           return 69;
 
+     ffmpeg_cleanup(0);
     exit_program(received_nb_signals ? 255 : main_return_code);
     return main_return_code;
 }

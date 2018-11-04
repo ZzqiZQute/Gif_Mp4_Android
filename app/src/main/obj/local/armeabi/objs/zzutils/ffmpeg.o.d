@@ -134,7 +134,9 @@ obj/local/armeabi/objs/zzutils/ffmpeg.o: jni/ffmpeg.c jni/config.h \
  X:/Users/zz/Downloads/android-ndk-r10d/platforms/android-21/arch-arm/usr/include/termios.h \
  jni/ffmpeg.h jni/cmdutils.h jni/include/libswscale/swscale.h \
  jni/include/libswscale/version.h jni/include/libavformat/avio.h \
- jni/include/libavutil/eval.h jni/include/libavutil/avassert.h
+ jni/include/libavutil/eval.h \
+ X:/Users/zz/Downloads/android-ndk-r10d/platforms/android-21/arch-arm/usr/include/jni.h \
+ jni/include/libavutil/avassert.h
 
 jni/config.h:
 
@@ -485,5 +487,7 @@ jni/include/libswscale/version.h:
 jni/include/libavformat/avio.h:
 
 jni/include/libavutil/eval.h:
+
+X:/Users/zz/Downloads/android-ndk-r10d/platforms/android-21/arch-arm/usr/include/jni.h:
 
 jni/include/libavutil/avassert.h:

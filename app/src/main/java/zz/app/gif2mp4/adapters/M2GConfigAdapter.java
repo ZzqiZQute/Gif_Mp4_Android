@@ -17,7 +17,6 @@ import android.widget.Toast;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.zip.DataFormatException;
 
 import zz.app.gif2mp4.R;
 import zz.app.gif2mp4.Utils;
@@ -27,11 +26,31 @@ public class M2GConfigAdapter extends RecyclerView.Adapter<M2GConfigAdapter.View
     private Context context;
     private String[] mp4convertoptions;
     private String[] mp4rotationselect;
+
+    public void setOutwidth(int outwidth) {
+        this.outwidth = outwidth;
+    }
+
+    public void setOutheight(int outheight) {
+        this.outheight = outheight;
+    }
+
     private int outwidth, outheight;
     private int lastRotateType = 4;
     private double fps = -1;
     private double outfps;
     private int width, height;
+
+    public double getScale() {
+        return scale;
+    }
+
+    public void setScale(double scale) {
+        this.scale = scale;
+    }
+
+    private double scale=1f;
+
     private int rotateType = 0;
     private long[] mp4info;
     private long framecnt;
@@ -92,63 +111,26 @@ public class M2GConfigAdapter extends RecyclerView.Adapter<M2GConfigAdapter.View
                 }
                 break;
             case 1:
-                str = outwidth + "x" + outheight;
+                str = (int)(outwidth*scale) + "x" + (int)(outheight*scale)+"("+new BigDecimal(scale).setScale(2,RoundingMode.HALF_UP).toString()+"x)";
                 viewHolder.itemView.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
                         View view = View.inflate(context, R.layout.mp4setscaledialoglayout, null);
-                        TextView tvOriWidth = view.findViewById(R.id.tvOriWidth);
-                        TextView tvOriHeight = view.findViewById(R.id.tvOriHeight);
-                        final EditText etOutWidth = view.findViewById(R.id.etOutWidth);
-                        final EditText etOutHeight = view.findViewById(R.id.etOutHeight);
                         final EditText etScale = view.findViewById(R.id.etScale);
-                        tvOriWidth.setText(String.valueOf(width));
-                        tvOriHeight.setText(String.valueOf(height));
-                        AlertDialog dialog = new AlertDialog.Builder(context).setView(view).setTitle("输出尺寸设置").setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                        AlertDialog dialog = new AlertDialog.Builder(context).setView(view).setTitle("缩放设置").setPositiveButton("确定", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
                                 String str = etScale.getText().toString();
                                 if (!str.isEmpty()) {
                                     try {
-                                        Double d = Double.parseDouble(str);
-                                        if (rotateType == 0 || rotateType == 2) {
-                                            outheight = (int) (height * d);
-                                            outwidth = (int) (width * d);
-                                        } else {
-                                            outheight = (int) (width * d);
-                                            outwidth = (int) (height * d);
-                                        }
+                                        scale= Double.parseDouble(str);
                                         notifyItemChanged(1);
                                         dialog.dismiss();
                                     } catch (NumberFormatException ignored) {
-                                        try {
-                                            String s = etOutWidth.getText().toString();
-                                            int w = Integer.parseInt(s);
-                                            s = etOutHeight.getText().toString();
-                                            int h = Integer.parseInt(s);
-                                            outwidth = w;
-                                            outheight = h;
-                                            notifyItemChanged(1);
-                                            dialog.dismiss();
-                                        } catch (NumberFormatException ignored2) {
                                             Toast.makeText(context, "输入的值无效", Toast.LENGTH_SHORT).show();
-                                        }
                                     }
                                 } else {
-                                    try {
-                                        String s = etOutWidth.getText().toString();
-                                        int w = Integer.parseInt(s);
-                                        s = etOutHeight.getText().toString();
-                                        int h = Integer.parseInt(s);
-                                        outwidth = w;
-                                        outheight = h;
-                                        notifyItemChanged(1);
-                                        dialog.dismiss();
-
-                                    } catch (NumberFormatException ignored) {
-                                        Toast.makeText(context, "输入的值无效", Toast.LENGTH_SHORT).show();
-
-                                    }
+                                    Toast.makeText(context, "输入的值无效", Toast.LENGTH_SHORT).show();
                                 }
                             }
                         }).setNegativeButton("取消", null).create();
@@ -167,7 +149,6 @@ public class M2GConfigAdapter extends RecyclerView.Adapter<M2GConfigAdapter.View
                     public void onClick(View v) {
                         View view = View.inflate(context, R.layout.mp4setframedialoglayout, null);
                         final EditText etFps = view.findViewById(R.id.etfps);
-                        final EditText etOutHeight = view.findViewById(R.id.etOutHeight);
                         AlertDialog dialog = new AlertDialog.Builder(context).setView(view).setTitle("输出帧率设置").setPositiveButton("确定", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {

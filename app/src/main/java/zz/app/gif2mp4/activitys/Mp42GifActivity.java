@@ -1,7 +1,6 @@
 package zz.app.gif2mp4.activitys;
 
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.graphics.Matrix;
 import android.graphics.Point;
 import android.graphics.SurfaceTexture;
@@ -17,16 +16,21 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.text.Layout;
 import android.transition.Transition;
 import android.transition.TransitionInflater;
 import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -45,6 +49,7 @@ import zz.app.gif2mp4.Utils;
 import zz.app.gif2mp4.adapters.M2GConfigAdapter;
 import zz.app.gif2mp4.interfaces.OnMp4ProgressSliderListener;
 import zz.app.gif2mp4.views.Mp4ProgressSliderView;
+import zz.app.gif2mp4.views.Mp4RegionSelectorView;
 
 public class Mp42GifActivity extends AppCompatActivity {
 
@@ -78,6 +83,11 @@ public class Mp42GifActivity extends AppCompatActivity {
     TextView tvConvertProgress;
     MediaScannerConnection connection;
     boolean bPrepared;
+    Mp4RegionSelectorView regionSelector;
+    FrameLayout videoHolder;
+    FrameLayout videoOutHolder;
+    RelativeLayout videoOutHolderHolder;
+    float left, top, right, bottom;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -95,7 +105,7 @@ public class Mp42GifActivity extends AppCompatActivity {
         setVolume(false);
         initAnimation();
         initView();
-        initScale();
+
         handler = new Handler(new Handler.Callback() {
 
 
@@ -121,7 +131,7 @@ public class Mp42GifActivity extends AppCompatActivity {
                                     @Override
                                     public void onScanCompleted(String path, Uri uri) {
                                         // 当MediaScanner完成文件扫描后回调
-                                      handler.obtainMessage(MSG_SCANFINISH).sendToTarget();
+                                        handler.obtainMessage(MSG_SCANFINISH).sendToTarget();
                                     }
                                 });
 
@@ -139,7 +149,7 @@ public class Mp42GifActivity extends AppCompatActivity {
                         break;
                     case MSG_SCANFINISH:
                         final File f = new File(gifpath);
-                        String str = "文件路径:" + gifpath + "\n文件大小:" + Utils.size2String(f.length())+"\n\n是否保存？";
+                        String str = "文件路径:" + gifpath + "\n文件大小:" + Utils.size2String(f.length()) + "\n\n是否保存？";
                         new AlertDialog.Builder(Mp42GifActivity.this).setTitle("转换完成").setMessage(str).setPositiveButton("是", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
@@ -171,7 +181,13 @@ public class Mp42GifActivity extends AppCompatActivity {
 
             }
         });
-
+        getWindow().findViewById(Window.ID_ANDROID_CONTENT).getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                getWindow().findViewById(Window.ID_ANDROID_CONTENT).getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                initScale();
+            }
+        });
     }
 
     private void timerproc() {
@@ -207,23 +223,61 @@ public class Mp42GifActivity extends AppCompatActivity {
         if (mp4info != null) {
             int width = (int) mp4info[0];
             int height = (int) mp4info[1];
-            float twidth = size.x - Utils.dp2px(this, 20);
-            float theight = Utils.dp2px(this, 221);
-            float rx;
-            float ry;
-            Matrix matrix = new Matrix();
+
+            float twidth = videoOutHolder.getWidth();
+            float theight = videoOutHolder.getHeight();
+            float temp;
+            ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) videoHolder.getLayoutParams();
+
             if (width * theight > height * twidth) {
-                float temp = twidth * height / width;
-                ry = (theight - temp) / 2;
-                matrix.setScale(1, temp / theight);
-                matrix.postTranslate(0, ry);
+                temp = (theight - height * twidth / width) / 2;
+                params.topMargin = params.bottomMargin = (int) temp;
+                videoHolder.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+                    @Override
+                    public void onGlobalLayout() {
+                        videoHolder.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                        regionSelector.reset();
+                    }
+                });
+                videoHolder.setLayoutParams(params);
+
             } else {
-                float temp = theight * width / height;
-                rx = (twidth - temp) / 2;
-                matrix.setScale(temp / twidth, 1);
-                matrix.postTranslate(rx, 0);
+                ViewGroup.LayoutParams params1 = videoOutHolderHolder.getLayoutParams();
+                params1.height += Utils.dp2px(Mp42GifActivity.this, 100);
+                videoOutHolderHolder.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+                    @Override
+                    public void onGlobalLayout() {
+                        videoOutHolderHolder.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                        ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) videoHolder.getLayoutParams();
+                        int width = (int) mp4info[0];
+                        int height = (int) mp4info[1];
+                        float twidth = videoOutHolder.getWidth();
+                        float theight = videoOutHolder.getHeight();
+                        float temp;
+                        if (width * theight > height * twidth) {
+                            temp = (theight - height * twidth / width) / 2;
+                            params.topMargin = params.bottomMargin = (int) temp;
+                        } else {
+                            temp = (twidth - width * theight / height) / 2;
+                            params.leftMargin = params.rightMargin = (int) temp;
+                        }
+                        videoHolder.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+                            @Override
+                            public void onGlobalLayout() {
+                                videoHolder.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                                regionSelector.reset();
+                            }
+                        });
+                        videoHolder.setLayoutParams(params);
+
+                    }
+                });
+                videoOutHolderHolder.setLayoutParams(params1);
+
             }
-            tvvideo.setTransform(matrix);
+
+
+
         }
     }
 
@@ -233,6 +287,29 @@ public class Mp42GifActivity extends AppCompatActivity {
     }
 
     private void initView() {
+        videoHolder = findViewById(R.id.videoholder);
+        videoOutHolder = findViewById(R.id.videooutholder);
+        videoOutHolderHolder = findViewById(R.id.videooutholderholder);
+        regionSelector = findViewById(R.id.regionSelector);
+        regionSelector.setListener(new Mp4RegionSelectorView.OnValueChangedListener() {
+            @Override
+            public void onValueChanged() {
+                left = regionSelector.getRealLeft();
+                top = regionSelector.getRealTop();
+                right = regionSelector.getRealRight();
+                bottom = regionSelector.getRealBottom();
+                if(mp4info!=null) {
+                    if (adapter.getRotateType() == 0 || adapter.getRotateType() == 2) {
+                        adapter.setOutwidth((int) ((right - left) * mp4info[0]));
+                        adapter.setOutheight((int) ((bottom - top) * mp4info[1]));
+                    } else {
+                        adapter.setOutwidth((int) ((bottom - top) * mp4info[1]));
+                        adapter.setOutheight((int) ((right - left) * mp4info[0]));
+                    }
+                    adapter.notifyItemChanged(1);
+                }
+            }
+        });
         adapter = new M2GConfigAdapter(this);
         recyclerView = findViewById(R.id.rvconfig);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -269,7 +346,7 @@ public class Mp42GifActivity extends AppCompatActivity {
                         @Override
                         public boolean onError(MediaPlayer mp, int what, int extra) {
                             Toast.makeText(Mp42GifActivity.this, "加载视频失败，请选择其他视频！", Toast.LENGTH_SHORT).show();
-                            waitdialog=null;
+                            waitdialog = null;
                             finish();
                             return true;
                         }
@@ -277,7 +354,6 @@ public class Mp42GifActivity extends AppCompatActivity {
                     player.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
                         @Override
                         public void onPrepared(MediaPlayer mp) {
-                            //TODO:Read info
                             bPrepared = true;
                             player.start();
                             player.pause();
@@ -527,7 +603,11 @@ public class Mp42GifActivity extends AppCompatActivity {
                         if (f.exists()) {
                             FileUtils.deleteQuietly(f);
                         }
+                        final double start=(double) mp4progress.getLbound() * player.getDuration() / 1000 / Mp4ProgressSliderView.SCALE;
+                        final double end=(double) mp4progress.getRbound() * player.getDuration() / 1000 / Mp4ProgressSliderView.SCALE;
+                        Utils.setTotalTime(end-start);
                         convertThread = new Thread(new Runnable() {
+
                             @Override
                             public void run() {
                                 try {
@@ -535,9 +615,13 @@ public class Mp42GifActivity extends AppCompatActivity {
                                 } catch (InterruptedException e) {
                                     e.printStackTrace();
                                 }
-                                int ret = Utils.mp42gif(mp4path, gifpath, adapter.getOutfps(), adapter.getRotateType(), adapter.getOutwidth(), adapter.getOutheight(),
-                                        (double) mp4progress.getLbound() * player.getDuration() / 1000 / Mp4ProgressSliderView.SCALE,
-                                        (double) mp4progress.getRbound() * player.getDuration() / 1000 / Mp4ProgressSliderView.SCALE);
+                                Utils.setAnalyseState(Utils.AnalyseState.Mp42Gif);
+
+                                int ret = Utils.mp42gif2(mp4path, gifpath, adapter.getOutfps(), adapter.getRotateType(),
+                                        adapter.getOutwidth(), adapter.getOutheight(),
+                                        (int) (left * mp4info[0]), (int) (top * mp4info[1]), (int) ((right - left) * mp4info[0]), (int) ((bottom - top) * mp4info[1]),
+                                        start,end,end-start);
+
                                 Utils.setProgress2(0);
                                 handler.obtainMessage(MSG_CONVERTFINISH).sendToTarget();
                                 convertThread = null;
@@ -551,6 +635,8 @@ public class Mp42GifActivity extends AppCompatActivity {
                             @Override
                             public void run() {
                                 while (!Thread.interrupted()) {
+                                    String line = Utils.getAnalyseLine();
+                                    Utils.analyseProgress(line);
                                     progress = Utils.getProgress2();
                                     if (progress != lastprogress) {
                                         lastprogress = progress;
@@ -567,7 +653,7 @@ public class Mp42GifActivity extends AppCompatActivity {
                         convertThread.start();
                         readProgressThread.start();
                     }
-                }).setNegativeButton("否",null).show();
+                }).setNegativeButton("否", null).show();
 
             }
         });
@@ -603,5 +689,6 @@ public class Mp42GifActivity extends AppCompatActivity {
                 player.seekTo(millis);
             }
         }
+
     }
 }

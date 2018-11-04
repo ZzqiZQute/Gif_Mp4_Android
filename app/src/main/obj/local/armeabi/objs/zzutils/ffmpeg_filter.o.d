@@ -78,8 +78,10 @@ obj/local/armeabi/objs/zzutils/ffmpeg_filter.o: jni/ffmpeg_filter.c \
  X:/Users/zz/Downloads/android-ndk-r10d/platforms/android-21/arch-arm/usr/include/linux/sched.h \
  jni/include/libavutil/threadmessage.h \
  jni/include/libswresample/swresample.h \
- jni/include/libswresample/version.h jni/include/libavfilter/buffersink.h \
- jni/include/libavfilter/avfilter.h jni/include/libavfilter/buffersrc.h \
+ jni/include/libswresample/version.h \
+ X:/Users/zz/Downloads/android-ndk-r10d/platforms/android-21/arch-arm/usr/include/jni.h \
+ jni/include/libavfilter/buffersink.h jni/include/libavfilter/avfilter.h \
+ jni/include/libavfilter/buffersrc.h \
  jni/include/libavresample/avresample.h \
  jni/include/libavutil/mathematics.h jni/include/libavresample/version.h \
  jni/include/libavutil/avassert.h jni/include/libavutil/avstring.h \
@@ -293,6 +295,8 @@ jni/include/libavutil/threadmessage.h:
 jni/include/libswresample/swresample.h:
 
 jni/include/libswresample/version.h:
+
+X:/Users/zz/Downloads/android-ndk-r10d/platforms/android-21/arch-arm/usr/include/jni.h:
 
 jni/include/libavfilter/buffersink.h:
 

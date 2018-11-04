@@ -36,35 +36,51 @@
                 <RelativeLayout
                     android:layout_width="match_parent"
                     android:layout_height="250dp"
-                    android:background="@color/colorPrimary">
+                    android:background="@color/colorPrimary"
+                    android:id="@+id/videooutholderholder">
 
                     <FrameLayout
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:layout_centerInParent="true"
                         android:layout_margin="@dimen/tendp"
-                        android:background="@android:color/white">
+                        android:id="@+id/videooutholder"
+                        android:background="@color/colorPrimary">
+
+                        <FrameLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:id="@+id/videoholder">
+
+                            <TextureView
+                                android:id="@+id/tvvideo"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent" />
+
+                            <zz.app.gif2mp4.views.Mp4RegionSelectorView
+                                android:id="@+id/regionSelector"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent" />
+                            <RelativeLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent">
+                                <ImageButton
+                                    android:id="@+id/btnaudio"
+                                    android:layout_width="25dp"
+                                    android:layout_height="25dp"
+                                    android:layout_alignParentEnd="true"
+                                    android:layout_alignParentBottom="true"
+                                    android:layout_margin="20dp"
+                                    android:background="@android:color/transparent"
+                                    android:contentDescription="@string/str_audio"
+                                    android:scaleType="centerInside"
+                                    android:src="@drawable/audiooff" />
+                            </RelativeLayout>
+                        </FrameLayout>
 
                     </FrameLayout>
 
-                    <TextureView
-                        android:id="@+id/tvvideo"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:layout_centerInParent="true"
-                        android:layout_margin="@dimen/tendp" />
 
-                    <ImageButton
-                        android:id="@+id/btnaudio"
-                        android:layout_width="25dp"
-                        android:layout_height="25dp"
-                        android:layout_alignParentEnd="true"
-                        android:layout_alignParentBottom="true"
-                        android:layout_margin="20dp"
-                        android:background="@android:color/transparent"
-                        android:contentDescription="@string/str_audio"
-                        android:scaleType="centerInside"
-                        android:src="@drawable/audiooff" />
                 </RelativeLayout>
 
                 <RelativeLayout
@@ -192,8 +208,7 @@
                                 android:layout_alignParentEnd="true"
                                 android:layout_margin="10dp"
                                 android:background="@drawable/outputdrawable"
-                                android:text="@string/str_convert"
-                                />
+                                android:text="@string/str_convert" />
                         </RelativeLayout>
 
                     </FrameLayout>

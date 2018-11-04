@@ -9,8 +9,13 @@
 #include "libswscale/swscale.h"
 #include "math.h"
 #include "ffmpeg.h"
+#include "pthread.h"
 
-
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+JavaVM *jvm = NULL;
+static JNIEnv *m_env=NULL;
+static jclass clazz=NULL;
+char line[1024];
 #define MP4TIMESCALE	60
 #define LOGD( ... )	__android_log_print( ANDROID_LOG_DEBUG, "gif2mp4_zz", __VA_ARGS__ )
 #define LOGE( ... )	__android_log_print( ANDROID_LOG_ERROR, "gif2mp4_zz", __VA_ARGS__ )
@@ -20,10 +25,11 @@ enum GIF2MP4ErrorType {
   GIF2MP4_NOT_ACTION
 };
 jint progress;
+
 jstring charTojstring( JNIEnv* env, const char* pat )
 {
   /* 定义java String类 strClass */
-  jclass strClass = (*env)->FindClass( env, "Ljava/lang/String;" );
+  jclass strClass = (*env)->FindClass( env, "java/lang/String" );
   /* 获取String(byte[],String)的构造器,用于将本地byte[]数组转换为一个新String */
   jmethodID ctorID = (*env)->GetMethodID( env, strClass, "<init>", "([BLjava/lang/String;)V" );
   /* 建立byte数组 */
@@ -56,7 +62,34 @@ char* jstringToChar( JNIEnv* env, jstring jstr )
   return(rtn);
 }
 
+JNIEXPORT jstring JNICALL Java_zz_app_gif2mp4_Utils_getAnalyseLine
+  (JNIEnv *env, jclass cls){
+  pthread_mutex_lock(&mutex);
+      jstring str=charTojstring(env,line);
+      pthread_mutex_unlock(&mutex);
+      return str;
 
+  }
+void log_callback_null(void *ptr, int level, const char *fmt, va_list vl)
+{
+        static int print_prefix = 1;
+        static int count;
+        static char prev[1024];
+
+        static int is_atty;
+        pthread_mutex_lock(&mutex);
+        av_log_format_line(ptr, level, fmt, vl, line, sizeof(line), &print_prefix);
+
+        strcpy(prev, line);
+          pthread_mutex_unlock(&mutex);
+        if (level <= AV_LOG_WARNING){
+          LOGE("%s", prev);
+        }else{
+          LOGD("%s",prev);
+
+
+        }
+}
 JNIEXPORT void JNICALL Java_zz_app_gif2mp4_Utils_welcome
 ( JNIEnv * env, jclass cls )
 {
@@ -64,7 +97,26 @@ JNIEXPORT void JNICALL Java_zz_app_gif2mp4_Utils_welcome
 }
 
 
+JNIEXPORT jint JNICALL Java_zz_app_gif2mp4_Utils_ffmpeg_1native
+  (JNIEnv *env, jclass cls, jobjectArray array){
+  (*env)->GetJavaVM(env, &jvm);
+  clazz=(*env)->NewGlobalRef(env,cls);
+  int i=0;
+  jsize arrLen=(*env)->GetArrayLength(env,array);
+  char** cmd=(char**)malloc(sizeof(char*)*arrLen);
 
+  for(;i<arrLen;i++)
+  {
+  jstring str=(jstring)(*env)->GetObjectArrayElement(env,array,i);
+  char *ch=jstringToChar(env,str);
+  cmd[i]=ch;
+  LOGD("native: cmd[%i]=%s",i,cmd[i]);
+  }
+  ffmpeg_run(arrLen,cmd);
+  free(cmd);
+  return 0;
+
+  }
 
 JNIEXPORT jboolean JNICALL Java_zz_app_gif2mp4_Utils_checkgif
 ( JNIEnv * env, jclass cls, jstring path )

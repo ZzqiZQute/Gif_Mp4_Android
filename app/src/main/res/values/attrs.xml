@@ -5,5 +5,10 @@
         <attr name="boundColor" format="color" />
         <attr name="topoffset" format="integer" />
     </declare-styleable>
+    <declare-styleable name="Mp4RegionSelectorView">
+        <attr name="color" format="color"/>
+        <attr name="opacity" format="float"/>
+        <attr name="src" format="reference"/>
+    </declare-styleable>
 
 </resources>

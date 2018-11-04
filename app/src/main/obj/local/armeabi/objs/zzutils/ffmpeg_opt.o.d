@@ -78,11 +78,12 @@ obj/local/armeabi/objs/zzutils/ffmpeg_opt.o: jni/ffmpeg_opt.c \
  X:/Users/zz/Downloads/android-ndk-r10d/platforms/android-21/arch-arm/usr/include/linux/sched.h \
  jni/include/libavutil/threadmessage.h \
  jni/include/libswresample/swresample.h \
- jni/include/libswresample/version.h jni/include/libavutil/avassert.h \
- jni/include/libavutil/avstring.h jni/include/libavutil/intreadwrite.h \
- jni/include/libavutil/bswap.h jni/include/libavutil/mathematics.h \
- jni/include/libavutil/opt.h jni/include/libavutil/parseutils.h \
- jni/include/libavutil/pixdesc.h
+ jni/include/libswresample/version.h \
+ X:/Users/zz/Downloads/android-ndk-r10d/platforms/android-21/arch-arm/usr/include/jni.h \
+ jni/include/libavutil/avassert.h jni/include/libavutil/avstring.h \
+ jni/include/libavutil/intreadwrite.h jni/include/libavutil/bswap.h \
+ jni/include/libavutil/mathematics.h jni/include/libavutil/opt.h \
+ jni/include/libavutil/parseutils.h jni/include/libavutil/pixdesc.h
 
 X:/Users/zz/Downloads/android-ndk-r10d/platforms/android-21/arch-arm/usr/include/stdint.h:
 
@@ -289,6 +290,8 @@ jni/include/libavutil/threadmessage.h:
 jni/include/libswresample/swresample.h:
 
 jni/include/libswresample/version.h:
+
+X:/Users/zz/Downloads/android-ndk-r10d/platforms/android-21/arch-arm/usr/include/jni.h:
 
 jni/include/libavutil/avassert.h:
 

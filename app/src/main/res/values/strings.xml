@@ -22,7 +22,7 @@
     </string-array>
     <string-array name="mp4convertoptions">
         <item>详细信息</item>
-        <item>视频大小</item>
+        <item>缩放大小</item>
         <item>帧率</item>
         <item>旋转角度</item>
     </string-array>

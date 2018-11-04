@@ -21,15 +21,13 @@ import java.io.IOException;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import zz.app.gif2mp4.beans.Mp4Info;
 import zz.app.gif2mp4.managers.ActivityTransitionManager;
 
 public class Utils {
-
-
-
-
     static {
         System.loadLibrary("x264");
         System.loadLibrary("swresample-3");
@@ -44,6 +42,32 @@ public class Utils {
 
 
     }
+
+    public native static String getAnalyseLine();
+
+    public enum AnalyseState{
+        None,Gif2Mp4,Mp42Gif
+    }
+    private static AnalyseState analyseState=AnalyseState.None;
+
+    public  static  AnalyseState getAnalyseState() {
+        return analyseState;
+    }
+
+    public static void setAnalyseState(AnalyseState analyseState) {
+        Utils.analyseState = analyseState;
+    }
+
+    public static Double getTotalTime() {
+        return totalTime;
+    }
+
+    public static void setTotalTime(Double totalTime) {
+        Utils.totalTime = totalTime;
+    }
+
+    private static Double totalTime;
+
     public static ActivityTransitionManager getManager() {
         return manager;
     }
@@ -58,7 +82,6 @@ public class Utils {
     public static final int SORTTYPE_NAME = 2;
 
     public static final int GIF2MP4_UNKNOWN_ERROR = 0;
-    public static final int GIF2MP4_H264_NOTFOUND = 1;
     public static final int GIF2MP4_NOT_ACTION = 2;
     public static final int SUCCESSCODE = 233;
     public static final int FAILURECODE = 235;
@@ -188,16 +211,16 @@ public class Utils {
 
     }
 
-    public static boolean createDir(String name) {
+    private static boolean createDir(String name) {
         File externalStorageDirectory = Environment.getExternalStorageDirectory();
         File dir = new File(externalStorageDirectory.getAbsoluteFile() + "/" + name);
         if (!dir.exists()) {
-            return dir.mkdir();
+            return !dir.mkdir();
         }
-        return true;
+        return false;
     }
 
-    public static String getDir(String name) {
+    private static String getDir(String name) {
         File externalStorageDirectory = Environment.getExternalStorageDirectory();
         File dir = new File(externalStorageDirectory.getAbsoluteFile() + "/Gif_Mp4/" + name);
         return dir.getAbsolutePath() + "/";
@@ -251,22 +274,22 @@ public class Utils {
             Toast.makeText(context, "请检查SD卡?", Toast.LENGTH_SHORT).show();
             context.finish();
         }
-        if (!Utils.createDir("Gif_Mp4")) //主目录
+        if (Utils.createDir("Gif_Mp4")) //主目录
         {
             Toast.makeText(context, "创建Gif_Mp4目录失败?", Toast.LENGTH_SHORT).show();
             context.finish();
         }
-        if (!Utils.createDir("Gif_Mp4/Gif")) //主目录
+        if (Utils.createDir("Gif_Mp4/Gif")) //主目录
         {
             Toast.makeText(context, "创建Gif_Mp4/Gif目录失败?", Toast.LENGTH_SHORT).show();
             context.finish();
         }
-        if (!Utils.createDir("Gif_Mp4/Mp4")) //主目录
+        if (Utils.createDir("Gif_Mp4/Mp4")) //主目录
         {
             Toast.makeText(context, "创建Gif_Mp4/Mp4目录失败?", Toast.LENGTH_SHORT).show();
             context.finish();
         }
-        if (!Utils.createDir("Gif_Mp4/.Cache")) //主目录
+        if (Utils.createDir("Gif_Mp4/.Cache")) //主目录
         {
             Toast.makeText(context, "创建Gif_Mp4/.Cache目录失败?", Toast.LENGTH_SHORT).show();
             context.finish();
@@ -283,13 +306,91 @@ public class Utils {
 
     public static native int gif2mp4(String gifpath, String mp4path, int encodertypenum, double bitrate, double outputtime, int framecnt);
 
-    public static native int mp42gif(String mp4path, String gifpath, double fps, int rotate, int width, int height, double start, double end);
+    public static int gif2mp42(String gifpath, String mp4path, int encodertypenum, double bitrate, double outputtime){
+        FFMpegCommand command=new FFMpegCommand();
+        command.addCmd("-i");
+        command.addCmd(gifpath);
+        command.addCmd("-c:v");
+        if(encodertypenum==0)
+            command.addCmd("h264");
+        else
+            command.addCmd("mpeg4");
+        command.addCmd("-an");
+        command.addCmd("-b:v");
+        command.addCmd(Utils.bitrate2String( bitrate));
+        double scale=outputtime*Utils.gifavgrate(gifpath)/Utils.gifframes(gifpath);
+        command.addCmd("-filter_complex");
+        command.addCmd(String.format(Locale.getDefault(),"[mid]setpts=PTS*%f;crop=floor(in_w/2)*2:floor(in_h/2)*2[mid]",scale));
+        command.addCmd("-pix_fmt");
+        command.addCmd("yuv420p");
+        command.addCmd("-y");
+        command.addCmd(mp4path);
+        ffmpeg_native(command.convertCmd());
+        return 0;
+    }
+
+    public static native int ffmpeg_native(String[] cmd);
+
+    public static void analyseProgress(String line){
+        if(analyseState==AnalyseState.Gif2Mp4) {
+            Pattern pattern = Pattern.compile("(?:.*)PTS(?:.*)T:(.*)");
+            Matcher matcher = pattern.matcher(line);
+            if (matcher.find()) {
+                try {
+                    Double d = Double.parseDouble(matcher.group(1));
+                    setProgress2((int) (d * 100 / totalTime));
+                } catch (NumberFormatException ignored) {
+
+                }
+            }
+        }else if (analyseState==AnalyseState.Mp42Gif){
+            Pattern pattern = Pattern.compile("(?:.*)PTS(?:.*)T:(.*)");
+            Matcher matcher = pattern.matcher(line);
+            if (matcher.find()) {
+                try {
+                    Double d = Double.parseDouble(matcher.group(1));
+                    setProgress2((int) (d * 100 / totalTime));
+                } catch (NumberFormatException ignored) {
+
+                }
+            }
+        }
+    }
+
+    public static native int mp42gif(String mp4path, String gifpath, double fps, int rotate, int width, int height, double start, double timeScale);
+
+    public static int mp42gif2(String mp4path, String gifpath, double fps, int rotate, int width, int height,
+                               int x,int y,int w,int h, double start, double end,double totalTime){
+        FFMpegCommand command=new FFMpegCommand();
+        command.addCmd("-i");
+        command.addCmd(mp4path);
+        command.addCmd("-filter_complex");
+        String temp=String.format(Locale.getDefault(),"crop=%d:%d:%d:%d[mid];",w,h,x,y);
+        switch (rotate) {
+            case 0:temp+="[mid]rotate=0";break;
+            case 1:temp+="[mid]rotate=PI/2";break;
+            case 2:temp+="[mid]rotate=PI";break;
+            case 3:temp+="[mid]rotate=-PI/2";break;
+        }
+        temp+="[mid2];";
+        double scale=totalTime/(end-start);
+        temp+=String.format(Locale.getDefault(),"[mid2]setpts=PTS*%f",scale);
+        command.addCmd(temp);
+        command.addCmd("-r");
+        command.addCmd(fps+"");
+        command.addCmd("-s");
+        command.addCmd(String.format(Locale.getDefault(),"%dx%d",width,height));
+        command.addCmd("-t");
+        command.addCmd(totalTime+"");
+        command.addCmd("-y");
+        command.addCmd(gifpath);
+        ffmpeg_native(command.convertCmd());
+        return 0;
+    }
 
     public static native int[] getMp4Size(String path);
 
     public static native long[] getMp4Info(String info);
-
-    public static native void ffmpegCommand(FFMpegCommand command);
 
     public static ArrayList<Mp4Info> getThumbnailMap(Context context, ArrayList<File> files) {
         ArrayList<Mp4Info> ret = new ArrayList<>();

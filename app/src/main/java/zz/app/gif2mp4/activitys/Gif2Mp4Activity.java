@@ -204,8 +204,11 @@ public class Gif2Mp4Activity extends AppCompatActivity {
                                 } catch (InterruptedException e) {
                                     e.printStackTrace();
                                 }
-                                int ret = Utils.gif2mp4(gifpath, mp4path, adapter.getEncodertypenum(), adapter.getBitrate(), adapter.getOutputtime(), adapter.getGifframes());
-                                Log.i(TAG, "run: ret=" + ret);
+                                Utils.setAnalyseState(Utils.AnalyseState.Gif2Mp4);
+                                Utils.setTotalTime(adapter.getOutputtime());
+                                int ret2=Utils.gif2mp42(gifpath, mp4path, adapter.getEncodertypenum(), adapter.getBitrate(), adapter.getOutputtime());
+                                //int ret = Utils.gif2mp4(gifpath, mp4path, adapter.getEncodertypenum(), adapter.getBitrate(), adapter.getOutputtime(), adapter.getGifframes());
+                                Log.i(TAG, "run: ret=" + ret2);
                                 Utils.setProgress2(0);
                                 handler.obtainMessage(MSG_CONVERTFINISH).sendToTarget();
                                 convertThread = null;
@@ -219,6 +222,8 @@ public class Gif2Mp4Activity extends AppCompatActivity {
                             @Override
                             public void run() {
                                 while (!Thread.interrupted()) {
+                                    String line=Utils.getAnalyseLine();
+                                    Utils.analyseProgress(line);
                                     progress = Utils.getProgress2();
                                     if (progress != lastprogress) {
                                         lastprogress = progress;
@@ -498,4 +503,13 @@ public class Gif2Mp4Activity extends AppCompatActivity {
         }
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if(connection!=null){
+            unbindService(connection);
+            connection=null;
+        }
+
+    }
 }
