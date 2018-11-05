@@ -10,6 +10,7 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.Toolbar;
 import android.transition.Transition;
 import android.transition.TransitionInflater;
 import android.view.Menu;
@@ -22,7 +23,6 @@ import android.widget.ListView;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Objects;
 
 import zz.app.gif2mp4.R;
 import zz.app.gif2mp4.Utils;
@@ -45,6 +45,7 @@ public class ShowMp4Activity extends AppCompatActivity implements SwipeRefreshLa
     final String Magic = "mp4";
     int sorttype;
     boolean ascending;
+    Toolbar toolbar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,6 +57,8 @@ public class ShowMp4Activity extends AppCompatActivity implements SwipeRefreshLa
     }
 
     private void init() {
+        toolbar=findViewById(R.id.toolBar);
+        setSupportActionBar(toolbar);
         Transition transition = TransitionInflater.from(this).inflateTransition(R.transition.fade);
         getWindow().setEnterTransition(transition);
         sortmethod = getResources().getStringArray(R.array.sort_type);
@@ -88,7 +91,6 @@ public class ShowMp4Activity extends AppCompatActivity implements SwipeRefreshLa
     }
 
     private void initView() {
-
         swipeRefreshLayout = findViewById(R.id.mp4srl);
         swipeRefreshLayout.setColorSchemeColors(getColor(R.color.colorAccent));
         swipeRefreshLayout.setOnRefreshListener(this);
@@ -105,8 +107,6 @@ public class ShowMp4Activity extends AppCompatActivity implements SwipeRefreshLa
                     case RecyclerView.SCROLL_STATE_DRAGGING:
                         break;
                     case RecyclerView.SCROLL_STATE_IDLE:
-
-
                         final LinearLayoutManager manager = (LinearLayoutManager) recyclerView.getLayoutManager();
                         handler.postDelayed(new Runnable() {
                             @Override
@@ -219,7 +219,7 @@ public class ShowMp4Activity extends AppCompatActivity implements SwipeRefreshLa
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.showimgmenu, menu);
+        getMenuInflater().inflate(R.menu.menu_showimg,menu);
         return super.onCreateOptionsMenu(menu);
     }
 

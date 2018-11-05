@@ -87,6 +87,14 @@ JNIEXPORT jint JNICALL Java_zz_app_gif2mp4_Utils_mp42gif
 
 /*
  * Class:     zz_app_gif2mp4_Utils
+ * Method:    isMp4HasAudio
+ * Signature: (Ljava/lang/String;)Z
+ */
+JNIEXPORT jboolean JNICALL Java_zz_app_gif2mp4_Utils_isMp4HasAudio
+  (JNIEnv *, jclass, jstring);
+
+/*
+ * Class:     zz_app_gif2mp4_Utils
  * Method:    getMp4Size
  * Signature: (Ljava/lang/String;)[I
  */

@@ -12,5 +12,7 @@
     <style name="TranslucentWindow" parent="AppTheme">
         <item name="android:windowIsTranslucent">true</item>
     </style>
-
+    <style name="ToolbarTheme" parent="@style/ThemeOverlay.AppCompat.ActionBar">
+        <item name="android:colorControlNormal">@android:color/white</item>
+    </style>
 </resources>

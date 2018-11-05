@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.SharedPreferences;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.view.ViewGroup;
@@ -21,11 +22,14 @@ import java.math.RoundingMode;
 import zz.app.gif2mp4.R;
 import zz.app.gif2mp4.Utils;
 
+import static android.content.Context.MODE_PRIVATE;
+
 public class M2GConfigAdapter extends RecyclerView.Adapter<M2GConfigAdapter.ViewHolder> {
 
     private Context context;
     private String[] mp4convertoptions;
     private String[] mp4rotationselect;
+    private double realTime;
 
     public void setOutwidth(int outwidth) {
         this.outwidth = outwidth;
@@ -40,7 +44,7 @@ public class M2GConfigAdapter extends RecyclerView.Adapter<M2GConfigAdapter.View
     private double fps = -1;
     private double outfps;
     private int width, height;
-
+    private double bitrate;
     public double getScale() {
         return scale;
     }
@@ -54,6 +58,12 @@ public class M2GConfigAdapter extends RecyclerView.Adapter<M2GConfigAdapter.View
     private int rotateType = 0;
     private long[] mp4info;
     private long framecnt;
+
+    public double getOutputTimeScale() {
+        return outputTimeScale;
+    }
+
+    private double outputTimeScale=1f;
 
     public int getOutwidth() {
         return outwidth;
@@ -107,7 +117,7 @@ public class M2GConfigAdapter extends RecyclerView.Adapter<M2GConfigAdapter.View
                     str += " 尺寸:" + width + "x" + height;
                     str += " 帧率:";
                     BigDecimal bigDecimal = new BigDecimal(fps);
-                    str += bigDecimal.setScale(3, RoundingMode.HALF_UP);
+                    str += bigDecimal.setScale(2, RoundingMode.HALF_UP);
                 }
                 break;
             case 1:
@@ -117,7 +127,7 @@ public class M2GConfigAdapter extends RecyclerView.Adapter<M2GConfigAdapter.View
                     public void onClick(View v) {
                         View view = View.inflate(context, R.layout.mp4setscaledialoglayout, null);
                         final EditText etScale = view.findViewById(R.id.etScale);
-                        AlertDialog dialog = new AlertDialog.Builder(context).setView(view).setTitle("缩放设置").setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                        AlertDialog dialog = new AlertDialog.Builder(context).setView(view).setTitle("大小缩放设置").setPositiveButton("确定", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
                                 String str = etScale.getText().toString();
@@ -147,7 +157,7 @@ public class M2GConfigAdapter extends RecyclerView.Adapter<M2GConfigAdapter.View
                 viewHolder.itemView.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        View view = View.inflate(context, R.layout.mp4setframedialoglayout, null);
+                        View view = View.inflate(context, R.layout.setframedialoglayout, null);
                         final EditText etFps = view.findViewById(R.id.etfps);
                         AlertDialog dialog = new AlertDialog.Builder(context).setView(view).setTitle("输出帧率设置").setPositiveButton("确定", new DialogInterface.OnClickListener() {
                             @Override
@@ -156,7 +166,7 @@ public class M2GConfigAdapter extends RecyclerView.Adapter<M2GConfigAdapter.View
                                 try {
                                     String s = etFps.getText().toString();
                                     double f = Double.parseDouble(s);
-                                    if (f > 60) {
+                                    if (f > 30) {
                                         Toast.makeText(context, "输入的值无效", Toast.LENGTH_SHORT).show();
                                     } else {
                                         outfps = f;
@@ -216,9 +226,107 @@ public class M2GConfigAdapter extends RecyclerView.Adapter<M2GConfigAdapter.View
                 });
                 str = mp4rotationselect[rotateType];
                 break;
+            case 4:
+                str= Utils.bitrate2String(bitrate);
+                viewHolder.itemView.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        View view1 = View.inflate(context, R.layout.setbitratedialoglayout, null);
+                        final EditText editText = view1.findViewById(R.id.etbitrate);
+                        new AlertDialog.Builder(context).setTitle("比特率").setView(view1).setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+                                double b = Utils.string2Bitrate(editText.getText().toString());
+                                if (b == -1) {
+                                    Toast.makeText(context, "无效的比特率", Toast.LENGTH_SHORT).show();
+                                } else {
+                                    bitrate = b;
+                                    SharedPreferences preferences = context.getSharedPreferences("mp42gif", MODE_PRIVATE);
+                                    preferences.edit().putInt("defaultbitrate", (int) bitrate).apply();
+                                    notifyItemChanged(4);
+                                }
+                            }
+                        }).setNegativeButton("取消", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+
+                            }
+                        }).show();
+                    }
+                });
+                break;
+            case 5:
+                str= Utils.mills2Str((long) (realTime*1000*outputTimeScale))+"("+new BigDecimal(outputTimeScale).setScale(2,RoundingMode.HALF_UP).toString()+"x)";
+                viewHolder.itemView.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        View view1 = View.inflate(context, R.layout.mp4settimeorscaledialoglayout, null);
+                        final EditText etScale = view1.findViewById(R.id.etScale);
+                        final EditText etTime = view1.findViewById(R.id.ettime);
+                        AlertDialog dialog = new AlertDialog.Builder(context).setView(view1).setTitle("时间设置").setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                String str = etTime.getText().toString();
+                                if (!str.isEmpty()) {
+                                    try {
+                                        double temp=Double.parseDouble(str)/realTime;
+                                        if(temp>2||temp<0.5) {
+                                            Toast.makeText(context, "输入的范围无效", Toast.LENGTH_SHORT).show();
+                                            dialog.dismiss();
+                                            return;
+                                        }
+                                        outputTimeScale= temp;
+                                        notifyItemChanged(5);
+                                        dialog.dismiss();
+                                    } catch (NumberFormatException ignored) {
+                                        Toast.makeText(context, "输入的值无效", Toast.LENGTH_SHORT).show();
+                                    }
+                                } else {
+                                    String str2=etScale.getText().toString();
+                                    if (!str2.isEmpty()) {
+                                        try {
+                                            double temp=Double.parseDouble(str2);
+                                            if(temp>2||temp<0.5) {
+                                                Toast.makeText(context, "输入的范围无效", Toast.LENGTH_SHORT).show();
+                                                dialog.dismiss();
+                                                return;
+                                            }
+                                            outputTimeScale= temp;
+                                            notifyItemChanged(5);
+                                            dialog.dismiss();
+                                        } catch (NumberFormatException ignored) {
+                                            Toast.makeText(context, "输入的值无效", Toast.LENGTH_SHORT).show();
+                                        }
+                                    } else {
+                                        Toast.makeText(context, "输入的值无效", Toast.LENGTH_SHORT).show();
+                                    }
+                                }
+                            }
+                        }).setNegativeButton("取消", null).create();
+                        dialog.show();
+
+                    }
+                });
+                break;
 
         }
         tvOptionValue.setText(str);
+    }
+
+    public double getBitrate() {
+        return bitrate;
+    }
+
+    public void setBitrate(double bitrate) {
+        this.bitrate = bitrate;
+    }
+
+    public void setRealTime(double realTime) {
+        this.realTime = realTime;
+    }
+
+    public double getRealTime() {
+        return realTime;
     }
 
     class RotateTypeAdapter extends BaseAdapter {
@@ -247,7 +355,7 @@ public class M2GConfigAdapter extends RecyclerView.Adapter<M2GConfigAdapter.View
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
             @SuppressLint("ViewHolder") //No Scroll
-                    View view = View.inflate(context, R.layout.mp4setrotatelistviewadapterlayout, null);
+                    View view = View.inflate(context, R.layout.setrotatelistviewadapterlayout, null);
             RadioButton button = view.findViewById(R.id.rbrotatetype);
             button.setText(mp4rotationselect[position]);
             if (rotateType == position) {

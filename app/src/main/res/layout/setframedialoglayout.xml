@@ -5,7 +5,7 @@
     <EditText
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="帧率(小于60 例:25.0)"
+        android:hint="帧率(小于30 例:25.0)"
         android:singleLine="true"
         android:layout_marginLeft="30dp"
         android:layout_marginRight="30dp"

@@ -1,7 +1,7 @@
 package zz.app.gif2mp4.activitys;
 
 import android.content.DialogInterface;
-import android.graphics.Matrix;
+import android.content.SharedPreferences;
 import android.graphics.Point;
 import android.graphics.SurfaceTexture;
 import android.media.MediaPlayer;
@@ -16,7 +16,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.text.Layout;
 import android.transition.Transition;
 import android.transition.TransitionInflater;
 import android.view.Surface;
@@ -51,7 +50,7 @@ import zz.app.gif2mp4.interfaces.OnMp4ProgressSliderListener;
 import zz.app.gif2mp4.views.Mp4ProgressSliderView;
 import zz.app.gif2mp4.views.Mp4RegionSelectorView;
 
-public class Mp42GifActivity extends AppCompatActivity {
+public class Mp4Activity extends AppCompatActivity {
 
     private static final int MSG_CONVERTFINISH = 1;
     private static final int MSG_CONVERTPROGRESSCHANGED = 2;
@@ -75,8 +74,9 @@ public class Mp42GifActivity extends AppCompatActivity {
     Thread readMp4InfoThread;
     long[] mp4info;
     Button btnOutput;
+    Button btnOutputMp4;
     Thread convertThread, readProgressThread;
-    String gifpath;
+    String outputPath;
     int progress, lastprogress = -1;
     AlertDialog convertDialog;
     ProgressBar pbConvert;
@@ -88,6 +88,9 @@ public class Mp42GifActivity extends AppCompatActivity {
     FrameLayout videoOutHolder;
     RelativeLayout videoOutHolderHolder;
     float left, top, right, bottom;
+    private long currentLeft;
+    private long currentRight;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -100,7 +103,7 @@ public class Mp42GifActivity extends AppCompatActivity {
     }
 
     private void init() {
-        mp4path = getIntent().getStringExtra("mp4path");
+        mp4path = getIntent().getStringExtra("inputPath");
         player = new MediaPlayer();
         setVolume(false);
         initAnimation();
@@ -119,12 +122,12 @@ public class Mp42GifActivity extends AppCompatActivity {
                         }
                         pbConvert = null;
                         tvConvertProgress = null;
-                        connection = new MediaScannerConnection(Mp42GifActivity.this,
+                        connection = new MediaScannerConnection(Mp4Activity.this,
                                 new MediaScannerConnection.MediaScannerConnectionClient() {
                                     @Override
                                     public void onMediaScannerConnected() {
                                         if (connection != null && connection.isConnected())
-                                            connection.scanFile(gifpath, "image/*");
+                                            connection.scanFile(outputPath, null);
                                         // MediaScanner service 创建后回调
                                     }
 
@@ -148,9 +151,9 @@ public class Mp42GifActivity extends AppCompatActivity {
                         }
                         break;
                     case MSG_SCANFINISH:
-                        final File f = new File(gifpath);
-                        String str = "文件路径:" + gifpath + "\n文件大小:" + Utils.size2String(f.length()) + "\n\n是否保存？";
-                        new AlertDialog.Builder(Mp42GifActivity.this).setTitle("转换完成").setMessage(str).setPositiveButton("是", new DialogInterface.OnClickListener() {
+                        final File f = new File(outputPath);
+                        String str = "文件路径:" + outputPath + "\n文件大小:" + Utils.size2String(f.length()) + "\n\n是否保存？";
+                        new AlertDialog.Builder(Mp4Activity.this).setTitle("转换完成").setMessage(str).setPositiveButton("是", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
                             }
@@ -209,9 +212,7 @@ public class Mp42GifActivity extends AppCompatActivity {
                     } else {
                         mp4progress.setCurrent(temp);
                     }
-
                 }
-
             }
         });
     }
@@ -223,7 +224,6 @@ public class Mp42GifActivity extends AppCompatActivity {
         if (mp4info != null) {
             int width = (int) mp4info[0];
             int height = (int) mp4info[1];
-
             float twidth = videoOutHolder.getWidth();
             float theight = videoOutHolder.getHeight();
             float temp;
@@ -243,7 +243,7 @@ public class Mp42GifActivity extends AppCompatActivity {
 
             } else {
                 ViewGroup.LayoutParams params1 = videoOutHolderHolder.getLayoutParams();
-                params1.height += Utils.dp2px(Mp42GifActivity.this, 100);
+                params1.height += Utils.dp2px(Mp4Activity.this, 100);
                 videoOutHolderHolder.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
                     @Override
                     public void onGlobalLayout() {
@@ -277,7 +277,6 @@ public class Mp42GifActivity extends AppCompatActivity {
             }
 
 
-
         }
     }
 
@@ -298,7 +297,7 @@ public class Mp42GifActivity extends AppCompatActivity {
                 top = regionSelector.getRealTop();
                 right = regionSelector.getRealRight();
                 bottom = regionSelector.getRealBottom();
-                if(mp4info!=null) {
+                if (mp4info != null) {
                     if (adapter.getRotateType() == 0 || adapter.getRotateType() == 2) {
                         adapter.setOutwidth((int) ((right - left) * mp4info[0]));
                         adapter.setOutheight((int) ((bottom - top) * mp4info[1]));
@@ -311,29 +310,11 @@ public class Mp42GifActivity extends AppCompatActivity {
             }
         });
         adapter = new M2GConfigAdapter(this);
+        SharedPreferences preferences = getSharedPreferences("mp42gif", MODE_PRIVATE);
+        adapter.setBitrate(preferences.getInt("defaultbitrate", 500 * 1000));
         recyclerView = findViewById(R.id.rvconfig);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(adapter);
-//        recyclerView.addItemDecoration(new RecyclerView.ItemDecoration() {
-//            @Override
-//            public void onDraw(Canvas c, RecyclerView parent, RecyclerView.State state) {
-//                super.onDraw(c, parent, state);
-//                View item = parent.getChildAt(0);
-//                Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
-//                p.setColor(getColor(R.color.colorPrimary));
-//                p.setStyle(Paint.Style.STROKE);
-//                Point size = new Point();
-//                getWindowManager().getDefaultDisplay().getSize(size);
-//                float y = size.x / 59f;
-//                float x = 5 * y;
-//                p.setPathEffect(new DashPathEffect(new float[]{x, y}, 0));
-//                p.setStrokeWidth(10);
-//                Path mp4path = new Path();
-//                mp4path.moveTo(item.getX(), item.getY()+item.getHeight() +25);
-//                mp4path.lineTo(item.getX() + item.getWidth(), item.getY()+item.getHeight() +25);
-//                c.drawPath(mp4path, p);
-//            }
-//        });
         tvvideo = findViewById(R.id.tvvideo);
         tvvideo.setSurfaceTextureListener(new TextureView.SurfaceTextureListener() {
             @Override
@@ -345,7 +326,7 @@ public class Mp42GifActivity extends AppCompatActivity {
                     player.setOnErrorListener(new MediaPlayer.OnErrorListener() {
                         @Override
                         public boolean onError(MediaPlayer mp, int what, int extra) {
-                            Toast.makeText(Mp42GifActivity.this, "加载视频失败，请选择其他视频！", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(Mp4Activity.this, "加载视频失败，请选择其他视频！", Toast.LENGTH_SHORT).show();
                             waitdialog = null;
                             finish();
                             return true;
@@ -357,7 +338,7 @@ public class Mp42GifActivity extends AppCompatActivity {
                             bPrepared = true;
                             player.start();
                             player.pause();
-                            waitdialog = new AlertDialog.Builder(Mp42GifActivity.this).setView(R.layout.waitinglayout).setCancelable(false).create();
+                            waitdialog = new AlertDialog.Builder(Mp4Activity.this).setView(R.layout.waitinglayout).setCancelable(false).create();
                             waitdialog.setCanceledOnTouchOutside(false);
                             waitdialog.show();
                             WindowManager.LayoutParams params = Objects.requireNonNull(waitdialog.getWindow()).getAttributes();
@@ -386,8 +367,13 @@ public class Mp42GifActivity extends AppCompatActivity {
                                                 adapter.setMp4Info(mp4info);
                                                 player.start();
                                                 tvLeft.setText(Utils.mills2Str(0));
+                                                currentLeft=0;
                                                 tvRight.setText(Utils.mills2Str(player.getDuration()));
+                                                currentRight=player.getDuration();
+                                                adapter.setRealTime((currentRight-currentLeft)/1000.0);
+                                                adapter.notifyItemChanged(5);
                                                 progressThread.start();
+
                                             }
                                         }
                                     });
@@ -514,11 +500,12 @@ public class Mp42GifActivity extends AppCompatActivity {
             @Override
             public void onSelectorMoving(Selector which, int value) {
                 if (player != null) {
-                    int temp;
-                    int duration = player.getDuration();
+                    long temp;
+                    long duration = player.getDuration();
                     switch (which) {
                         case LEFT:
-                            temp = (int) ((double) value * duration / Mp4ProgressSliderView.SCALE);
+                            temp = (long) ((double) value * duration / Mp4ProgressSliderView.SCALE);
+                            currentLeft=temp;
                             tvLeft.setText(Utils.mills2Str(temp));
                             compatibleSeekTo(temp);
                             tvCurrent.setText(Utils.mills2Str(temp));
@@ -526,7 +513,8 @@ public class Mp42GifActivity extends AppCompatActivity {
                             btnPlaypause.setImageResource(R.drawable.pause);
                             break;
                         case RIGHT:
-                            temp = (int) ((double) value * duration / Mp4ProgressSliderView.SCALE);
+                            temp = (long) ((double) value * duration / Mp4ProgressSliderView.SCALE);
+                            currentRight=temp;
                             tvRight.setText(Utils.mills2Str(temp));
                             compatibleSeekTo(temp);
                             tvCurrent.setText(Utils.mills2Str(temp));
@@ -534,6 +522,9 @@ public class Mp42GifActivity extends AppCompatActivity {
                             btnPlaypause.setImageResource(R.drawable.pause);
                             break;
                     }
+                    adapter.setRealTime((currentRight-currentLeft)/1000.0);
+                    adapter.notifyItemChanged(5);
+
                 }
             }
 
@@ -592,20 +583,20 @@ public class Mp42GifActivity extends AppCompatActivity {
         btnOutput.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                new AlertDialog.Builder(Mp42GifActivity.this).setTitle("提示").setMessage("即将转换，是否确认？").setPositiveButton("是", new DialogInterface.OnClickListener() {
+                new AlertDialog.Builder(Mp4Activity.this).setTitle("提示").setMessage("即将转换，是否确认？\n(将丢失音频数据)").setPositiveButton("是", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         Calendar calendar = Calendar.getInstance();
                         SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmss", Locale.getDefault());
                         String str = format.format(calendar.getTime());
-                        gifpath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Gif_Mp4/Gif/" + str + ".gif";
-                        File f = new File(gifpath);
+                        outputPath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Gif_Mp4/Gif/" + str + ".gif";
+                        File f = new File(outputPath);
                         if (f.exists()) {
                             FileUtils.deleteQuietly(f);
                         }
-                        final double start=(double) mp4progress.getLbound() * player.getDuration() / 1000 / Mp4ProgressSliderView.SCALE;
-                        final double end=(double) mp4progress.getRbound() * player.getDuration() / 1000 / Mp4ProgressSliderView.SCALE;
-                        Utils.setTotalTime(end-start);
+                        final double start = (double) mp4progress.getLbound() * player.getDuration() / 1000 / Mp4ProgressSliderView.SCALE;
+                        final double end = (double) mp4progress.getRbound() * player.getDuration() / 1000 / Mp4ProgressSliderView.SCALE;
+
                         convertThread = new Thread(new Runnable() {
 
                             @Override
@@ -616,12 +607,12 @@ public class Mp42GifActivity extends AppCompatActivity {
                                     e.printStackTrace();
                                 }
                                 Utils.setAnalyseState(Utils.AnalyseState.Mp42Gif);
-
-                                int ret = Utils.mp42gif2(mp4path, gifpath, adapter.getOutfps(), adapter.getRotateType(),
-                                        adapter.getOutwidth(), adapter.getOutheight(),
+                                double totalTime=(end - start)*adapter.getOutputTimeScale();
+                                Utils.setTotalTime(totalTime);
+                                int ret = Utils.mp42gif2(mp4path, outputPath, adapter.getOutfps(), adapter.getRotateType(),
+                                        (int) (adapter.getOutwidth() * adapter.getScale()), (int) (adapter.getOutheight() * adapter.getScale()),
                                         (int) (left * mp4info[0]), (int) (top * mp4info[1]), (int) ((right - left) * mp4info[0]), (int) ((bottom - top) * mp4info[1]),
-                                        start,end,end-start);
-
+                                        start, end, totalTime);
                                 Utils.setProgress2(0);
                                 handler.obtainMessage(MSG_CONVERTFINISH).sendToTarget();
                                 convertThread = null;
@@ -645,11 +636,80 @@ public class Mp42GifActivity extends AppCompatActivity {
                                 }
                             }
                         });
-                        View v1 = View.inflate(Mp42GifActivity.this, R.layout.convertdialoglayout, null);
+                        View v1 = View.inflate(Mp4Activity.this, R.layout.convertdialoglayout, null);
                         pbConvert = v1.findViewById(R.id.pbconvert);
                         tvConvertProgress = v1.findViewById(R.id.tvconvertprogress);
                         tvConvertProgress.setText("0%");
-                        convertDialog = new AlertDialog.Builder(Mp42GifActivity.this).setView(v1).setCancelable(false).show();
+                        convertDialog = new AlertDialog.Builder(Mp4Activity.this).setView(v1).setCancelable(false).show();
+                        convertThread.start();
+                        readProgressThread.start();
+                    }
+                }).setNegativeButton("否", null).show();
+
+            }
+        });
+        btnOutputMp4 = findViewById(R.id.btnoutputmp4);
+        btnOutputMp4.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                new AlertDialog.Builder(Mp4Activity.this).setTitle("提示").setMessage("即将转换，是否确认？").setPositiveButton("是", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        Calendar calendar = Calendar.getInstance();
+                        SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmss", Locale.getDefault());
+                        String str = format.format(calendar.getTime());
+                        outputPath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Gif_Mp4/Mp4/" + str + ".mp4";
+                        File f = new File(outputPath);
+                        if (f.exists()) {
+                            FileUtils.deleteQuietly(f);
+                        }
+                        final double start = (double) mp4progress.getLbound() * player.getDuration() / 1000 / Mp4ProgressSliderView.SCALE;
+                        final double end = (double) mp4progress.getRbound() * player.getDuration() / 1000 / Mp4ProgressSliderView.SCALE;
+
+                        convertThread = new Thread(new Runnable() {
+
+                            @Override
+                            public void run() {
+                                try {
+                                    Thread.sleep(500);
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
+                                Utils.setAnalyseState(Utils.AnalyseState.Mp42Mp4);
+                                double totalTime=(end - start)*adapter.getOutputTimeScale();
+                                Utils.setTotalTime(totalTime);
+                                int ret = Utils.mp42mp4(mp4path, outputPath, adapter.getOutfps(), adapter.getRotateType(),
+                                        (int) (adapter.getOutwidth() * adapter.getScale()), (int) (adapter.getOutheight() * adapter.getScale()),
+                                        (int) (left * mp4info[0]), (int) (top * mp4info[1]), (int) ((right - left) * mp4info[0]), (int) ((bottom - top) * mp4info[1]),
+                                        start, end, totalTime,adapter.getBitrate(),Utils.isMp4HasAudio(mp4path));
+                                Utils.setProgress2(0);
+                                handler.obtainMessage(MSG_CONVERTFINISH).sendToTarget();
+                                convertThread = null;
+                                if (readProgressThread != null && !readProgressThread.isInterrupted()) {
+                                    readProgressThread.interrupt();
+                                    readProgressThread = null;
+                                }
+                            }
+                        });
+                        readProgressThread = new Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                while (!Thread.interrupted()) {
+                                    String line = Utils.getAnalyseLine();
+                                    Utils.analyseProgress(line);
+                                    progress = Utils.getProgress2();
+                                    if (progress != lastprogress) {
+                                        lastprogress = progress;
+                                        handler.obtainMessage(MSG_CONVERTPROGRESSCHANGED).sendToTarget();
+                                    }
+                                }
+                            }
+                        });
+                        View v1 = View.inflate(Mp4Activity.this, R.layout.convertdialoglayout, null);
+                        pbConvert = v1.findViewById(R.id.pbconvert);
+                        tvConvertProgress = v1.findViewById(R.id.tvconvertprogress);
+                        tvConvertProgress.setText("0%");
+                        convertDialog = new AlertDialog.Builder(Mp4Activity.this).setView(v1).setCancelable(false).show();
                         convertThread.start();
                         readProgressThread.start();
                     }
@@ -681,13 +741,22 @@ public class Mp42GifActivity extends AppCompatActivity {
         super.onBackPressed();
     }
 
-    private void compatibleSeekTo(int millis) {
+    private void compatibleSeekTo(long millis) {
         if (player != null) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 player.seekTo(millis, MediaPlayer.SEEK_CLOSEST);
             } else {
-                player.seekTo(millis);
+                player.seekTo((int) millis);
             }
+        }
+
+    }
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if(connection!=null){
+            unbindService(connection);
+            connection=null;
         }
 
     }

@@ -32,7 +32,7 @@ import java.util.ArrayList;
 
 import zz.app.gif2mp4.R;
 import zz.app.gif2mp4.Utils;
-import zz.app.gif2mp4.activitys.Gif2Mp4Activity;
+import zz.app.gif2mp4.activitys.GifActivity;
 import zz.app.gif2mp4.activitys.ShowGifActivity;
 import zz.app.gif2mp4.controllers.ActivityTransitionController;
 import zz.app.gif2mp4.interfaces.IGoBack;
@@ -69,7 +69,7 @@ public class GifListViewAdapter extends RecyclerView.Adapter<GifListViewAdapter.
     @Override
     public void onBindViewHolder(final ViewHolder viewHolder, int i) {
         if (i > 0 && i < files.size() + 1) {
-            viewHolder.tvHint.setVisibility(View.INVISIBLE);
+            viewHolder.cvHintHolder.setVisibility(View.INVISIBLE);
             ViewGroup.LayoutParams params = viewHolder.cardView.getLayoutParams();
             Point size = new Point();
             ((ShowGifActivity) context).getWindowManager().getDefaultDisplay().getSize(size);
@@ -101,7 +101,7 @@ public class GifListViewAdapter extends RecyclerView.Adapter<GifListViewAdapter.
             gifView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(final View v) {
-                    Intent intent = new Intent(context, Gif2Mp4Activity.class);
+                    Intent intent = new Intent(context, GifActivity.class);
                     //Intent intent = new Intent(context, TestActivity.class);
                     ShowGifActivity activity = ((ShowGifActivity) context);
                     if (null != gifView.getDrawable() && gifView.getDrawable() instanceof GifDrawable) {
@@ -121,7 +121,7 @@ public class GifListViewAdapter extends RecyclerView.Adapter<GifListViewAdapter.
                                     from.back();
                                 }
                             });
-                            intent.putExtra("gifpath", files.get(viewHolder.getPosition()-1).getAbsolutePath());
+                            intent.putExtra("inputPath", files.get(viewHolder.getPosition()-1).getAbsolutePath());
 
                             int w = gifView.getWidth();
                             int h = gifView.getHeight();
@@ -167,8 +167,12 @@ public class GifListViewAdapter extends RecyclerView.Adapter<GifListViewAdapter.
             });
 
         }else{
+
+            viewHolder.cvHintHolder.setVisibility(View.INVISIBLE);
+            viewHolder.cardView.setVisibility(View.INVISIBLE);
             if(ready) {
-                viewHolder.tvHint.setVisibility(View.VISIBLE);
+                viewHolder.cvHintHolder.setRadius(30);
+                viewHolder.cvHintHolder.setVisibility(View.VISIBLE);
                 if (i == 0) {
                     String s = "请选择以下Gif文件";
                     viewHolder.tvHint.setText(s);
@@ -177,12 +181,11 @@ public class GifListViewAdapter extends RecyclerView.Adapter<GifListViewAdapter.
                     viewHolder.tvHint.setText(s);
                 }
             }
-            ViewGroup.LayoutParams params =  viewHolder.cardView.getLayoutParams();
+            ViewGroup.LayoutParams params = viewHolder.cvHintHolder.getLayoutParams();
             Point size = new Point();
             ((ShowGifActivity) context).getWindowManager().getDefaultDisplay().getSize(size);
-            params.height = size.y / 4;
-            viewHolder.cardView.setLayoutParams(params);
-            viewHolder.cardView.setVisibility(View.INVISIBLE);
+            params.height = size.y/6;
+            viewHolder.cvHintHolder.setLayoutParams(params);
         }
     }
 
@@ -206,6 +209,7 @@ public class GifListViewAdapter extends RecyclerView.Adapter<GifListViewAdapter.
         FrameLayout frameLayout;
         CardView cardView;
         TextView tvHint;
+        CardView cvHintHolder;
 
         ViewHolder(View itemView) {
             super(itemView);
@@ -215,6 +219,7 @@ public class GifListViewAdapter extends RecyclerView.Adapter<GifListViewAdapter.
             cardView = itemView.findViewById(R.id.cardview);
             tvHint=itemView.findViewById(R.id.tvHint);
             frameLayout = (FrameLayout) itemView;
+            cvHintHolder=itemView.findViewById(R.id.cvhintholder);
         }
     }
 }

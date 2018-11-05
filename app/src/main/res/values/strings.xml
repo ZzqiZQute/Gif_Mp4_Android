@@ -12,6 +12,12 @@
     <string name="str_current">当前</string>
     <string name="str_right_bound">右边界</string>
     <string name="str_convert">转换</string>
+    <string name="str_converttogif">转换为Gif</string>
+    <string name="str_converttomp4">转换为Mp4</string>
+    <string name="str_wechatformat">微信格式</string>
+    <string name="str_reversegif">Gif倒放</string>
+    <string name="str_gifjump">Gif弹跳</string>
+    <string name="str_gimpToolKit">GiMp工具箱</string>
     <string-array name="sort_type">
         <item>按时间降序</item>
         <item>按时间升序</item>
@@ -25,6 +31,8 @@
         <item>缩放大小</item>
         <item>帧率</item>
         <item>旋转角度</item>
+        <item>视频比特率(Mp4)</item>
+        <item>输出时长</item>
     </string-array>
     <string-array name="mp4rotationselect">
         <item>原始</item>

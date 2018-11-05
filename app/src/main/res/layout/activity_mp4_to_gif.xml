@@ -22,7 +22,7 @@
         xmlns:tools="http://schemas.android.com/tools"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        tools:context=".activitys.Mp42GifActivity">
+        tools:context=".activitys.Mp4Activity">
 
         <FrameLayout
             android:layout_width="match_parent"
@@ -194,22 +194,30 @@
                     <FrameLayout
                         android:id="@+id/layoutconvert"
                         android:layout_width="match_parent"
-                        android:layout_height="100dp"
+                        android:layout_height="80dp"
                         android:layout_alignParentBottom="true">
 
-                        <RelativeLayout
+                        <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="match_parent">
 
                             <Button
-                                android:id="@+id/btnoutput"
-                                android:layout_width="150dp"
-                                android:layout_height="60dp"
-                                android:layout_alignParentEnd="true"
-                                android:layout_margin="10dp"
+                                android:id="@+id/btnoutputmp4"
+                                android:layout_width="0dp"
+                                android:layout_weight="1"
+                                android:layout_height="match_parent"
+                                android:layout_margin="15dp"
                                 android:background="@drawable/outputdrawable"
-                                android:text="@string/str_convert" />
-                        </RelativeLayout>
+                                android:text="@string/str_converttomp4" />
+                            <Button
+                                android:id="@+id/btnoutput"
+                                android:layout_width="0dp"
+                                android:layout_height="match_parent"
+                                android:layout_weight="1"
+                                android:layout_margin="15dp"
+                                android:background="@drawable/outputdrawable"
+                                android:text="@string/str_converttogif" />
+                        </LinearLayout>
 
                     </FrameLayout>
 

@@ -10,54 +10,58 @@
         <FrameLayout
             android:layout_alignParentBottom="true"
             android:layout_width="match_parent"
-            android:layout_height="100dp"
+            android:layout_height="150dp"
             android:paddingBottom="20dp"
             android:id="@+id/outputlayout">
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:orientation="horizontal"
-                android:baselineAligned="false"
-                tools:ignore="UselessParent">
-                <RelativeLayout
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="2">
-                    <Button
-                        android:layout_width="120dp"
-                        android:layout_height="40dp"
-                        android:layout_margin="10dp"
-                        android:layout_centerInParent="true"
-                        android:id="@+id/btnweixin"
-                        android:layout_gravity="center_vertical"
-                        android:background="@drawable/wxdrawable" />
-                </RelativeLayout>
-
+                android:orientation="vertical">
                 <LinearLayout
-                    android:padding="10dp"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+                    <Button
+                        android:layout_width="0dp"
+                        android:layout_weight="1"
+                        android:layout_margin="5dp"
+                        android:layout_height="match_parent"
+                        android:id="@+id/btnoutputgif"
+                        android:text="@string/str_converttogif"
+                        android:background="@drawable/outputdrawable"/>
+                    <Button
+                        android:layout_width="0dp"
+                        android:layout_weight="1"
+                        android:layout_margin="5dp"
+                        android:layout_height="match_parent"
+                        android:id="@+id/btngifreverse"
+                        android:text="@string/str_reversegif"
+                        android:background="@drawable/outputdrawable"/>
+
 
                 </LinearLayout>
-
-                <RelativeLayout
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+                <Button
                     android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_margin="5dp"
                     android:layout_height="match_parent"
-                    android:layout_weight="2">
+                    android:id="@+id/btngifjump"
+                    android:text="@string/str_gifjump"
+                    android:background="@drawable/outputdrawable"/>
                     <Button
-                        android:layout_margin="10dp"
-                        android:layout_width="150dp"
-                        android:layout_centerInParent="true"
+                        android:layout_width="0dp"
+                        android:layout_weight="1"
+                        android:layout_margin="5dp"
                         android:layout_height="match_parent"
                         android:id="@+id/btnoutput"
-                        android:text="转换"
+                        android:text="@string/str_converttomp4"
                         android:background="@drawable/outputdrawable"/>
-                </RelativeLayout>
-
             </LinearLayout>
-
+            </LinearLayout>
         </FrameLayout>
 <android.support.v7.widget.RecyclerView
     android:visibility="visible"
@@ -76,5 +80,7 @@
         android:orientation="vertical"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:id="@+id/llselectpicwrapper"></LinearLayout>
+        android:id="@+id/llselectpicwrapper">
+
+    </LinearLayout>
 </zz.app.gif2mp4.layouts.YellowStyleFrameLayout>

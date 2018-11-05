@@ -118,7 +118,7 @@ public class ShowGifActivity extends AppCompatActivity implements SwipeRefreshLa
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.showimgmenu, menu);
+        getMenuInflater().inflate(R.menu.menu_showimg, menu);
         return super.onCreateOptionsMenu(menu);
     }
 

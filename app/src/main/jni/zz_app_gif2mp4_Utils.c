@@ -867,3 +867,30 @@ JNIEXPORT jlongArray JNICALL Java_zz_app_gif2mp4_Utils_getMp4Info
   (*env)->SetLongArrayRegion(env,arr,0,4,ret);
   return arr;
 }
+JNIEXPORT jboolean JNICALL Java_zz_app_gif2mp4_Utils_isMp4HasAudio
+  (JNIEnv *env, jclass cls, jstring path)
+  {
+   char		*input		= jstringToChar( env, path );
+    AVFormatContext * inputFmtCtx	= avformat_alloc_context();
+    int err;
+    err=avformat_open_input( &inputFmtCtx, input, NULL, NULL );
+    if(err<0)return JNI_FALSE;
+    err=avformat_find_stream_info( inputFmtCtx, NULL );
+    if(err<0)return JNI_FALSE;
+    int i=0;
+    int	vsnb	= -1;
+    for (; i < inputFmtCtx->nb_streams; i++ )
+    {
+      if ( inputFmtCtx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_AUDIO )
+      {
+        vsnb = i;
+        break;
+      }
+    }
+    if ( vsnb != -1 )
+    {
+
+   return JNI_TRUE;
+    }
+    return JNI_FALSE;
+  }

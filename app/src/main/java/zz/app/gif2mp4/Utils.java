@@ -45,12 +45,13 @@ public class Utils {
 
     public native static String getAnalyseLine();
 
-    public enum AnalyseState{
-        None,Gif2Mp4,Mp42Gif
+    public enum AnalyseState {
+        None, Gif2Mp4, Mp42Gif, Mp42Mp4, GifReverse
     }
-    private static AnalyseState analyseState=AnalyseState.None;
 
-    public  static  AnalyseState getAnalyseState() {
+    private static AnalyseState analyseState = AnalyseState.None;
+
+    public static AnalyseState getAnalyseState() {
         return analyseState;
     }
 
@@ -71,12 +72,15 @@ public class Utils {
     public static ActivityTransitionManager getManager() {
         return manager;
     }
+
     private static ActivityTransitionManager manager;
-    public static void initManager(){
-        if(manager==null){
-            manager=new ActivityTransitionManager();
+
+    public static void initManager() {
+        if (manager == null) {
+            manager = new ActivityTransitionManager();
         }
     }
+
     public static final int SORTTYPE_TIME = 0;
     public static final int SORTTYPE_SIZE = 1;
     public static final int SORTTYPE_NAME = 2;
@@ -86,7 +90,6 @@ public class Utils {
     public static final int SUCCESSCODE = 233;
     public static final int FAILURECODE = 235;
     private static final String TAG = "Utils";
-
 
 
     public static int getProgress2() {
@@ -123,7 +126,7 @@ public class Utils {
     public static ArrayList<File> getFiles(String type, int sortType, boolean ascending, boolean expecterror) {
         ArrayList<File> files;
         files = new ArrayList<>(FileUtils.listFiles(Environment.getExternalStorageDirectory(), FileFilterUtils.suffixFileFilter(type), DirectoryFileFilter.INSTANCE));
-        Log.d(TAG, "getFiles: size="+files.size());
+        Log.d(TAG, "getFiles: size=" + files.size());
         sortFiles(files, sortType, ascending);
         if (expecterror && type.equals("gif"))
             files = exceptErrorGif(files);
@@ -306,21 +309,42 @@ public class Utils {
 
     public static native int gif2mp4(String gifpath, String mp4path, int encodertypenum, double bitrate, double outputtime, int framecnt);
 
-    public static int gif2mp42(String gifpath, String mp4path, int encodertypenum, double bitrate, double outputtime){
-        FFMpegCommand command=new FFMpegCommand();
+    public static int gif2mp42(String gifpath, String mp4path, int encodertypenum, double bitrate, double outputtime,int w,int h,int rotate,double rate) {
+        FFMpegCommand command = new FFMpegCommand();
         command.addCmd("-i");
         command.addCmd(gifpath);
         command.addCmd("-c:v");
-        if(encodertypenum==0)
+        if (encodertypenum == 0)
             command.addCmd("h264");
         else
             command.addCmd("mpeg4");
         command.addCmd("-an");
         command.addCmd("-b:v");
-        command.addCmd(Utils.bitrate2String( bitrate));
-        double scale=outputtime*Utils.gifavgrate(gifpath)/Utils.gifframes(gifpath);
+        command.addCmd(Utils.bitrate2String(bitrate));
+        double scale = outputtime * Utils.gifavgrate(gifpath) / Utils.gifframes(gifpath);
         command.addCmd("-filter_complex");
-        command.addCmd(String.format(Locale.getDefault(),"[mid]setpts=PTS*%f;crop=floor(in_w/2)*2:floor(in_h/2)*2[mid]",scale));
+        String temp=String.format(Locale.getDefault(), "crop=floor(in_w/2)*2:floor(in_h/2)*2[mid2];[mid2]setpts=PTS*%f[mid];", scale);
+        switch (rotate) {
+            case 0:
+                temp += "[mid]rotate=0";
+                break;
+            case 1:
+                temp += "[mid]rotate=PI/2";
+                break;
+            case 2:
+                temp += "[mid]rotate=PI";
+                break;
+            case 3:
+                temp += "[mid]rotate=-PI/2";
+                break;
+        }
+        command.addCmd(temp);
+        command.addCmd("-s");
+        command.addCmd(String.format(Locale.getDefault(),"%dx%d",(int)((float)w/2)*2,(int)((float)h/2)*2));
+        command.addCmd("-r");
+        command.addCmd(rate+"");
+        command.addCmd("-t");
+        command.addCmd(outputtime+"");
         command.addCmd("-pix_fmt");
         command.addCmd("yuv420p");
         command.addCmd("-y");
@@ -331,28 +355,15 @@ public class Utils {
 
     public static native int ffmpeg_native(String[] cmd);
 
-    public static void analyseProgress(String line){
-        if(analyseState==AnalyseState.Gif2Mp4) {
-            Pattern pattern = Pattern.compile("(?:.*)PTS(?:.*)T:(.*)");
-            Matcher matcher = pattern.matcher(line);
-            if (matcher.find()) {
-                try {
-                    Double d = Double.parseDouble(matcher.group(1));
-                    setProgress2((int) (d * 100 / totalTime));
-                } catch (NumberFormatException ignored) {
+    public static void analyseProgress(String line) {
+        Pattern pattern = Pattern.compile("(?:.*)PTS(?:.*)T:(.*)");
+        Matcher matcher = pattern.matcher(line);
+        if (matcher.find()) {
+            try {
+                Double d = Double.parseDouble(matcher.group(1));
+                setProgress2((int) (d * 100 / totalTime));
+            } catch (NumberFormatException ignored) {
 
-                }
-            }
-        }else if (analyseState==AnalyseState.Mp42Gif){
-            Pattern pattern = Pattern.compile("(?:.*)PTS(?:.*)T:(.*)");
-            Matcher matcher = pattern.matcher(line);
-            if (matcher.find()) {
-                try {
-                    Double d = Double.parseDouble(matcher.group(1));
-                    setProgress2((int) (d * 100 / totalTime));
-                } catch (NumberFormatException ignored) {
-
-                }
             }
         }
     }
@@ -360,33 +371,133 @@ public class Utils {
     public static native int mp42gif(String mp4path, String gifpath, double fps, int rotate, int width, int height, double start, double timeScale);
 
     public static int mp42gif2(String mp4path, String gifpath, double fps, int rotate, int width, int height,
-                               int x,int y,int w,int h, double start, double end,double totalTime){
-        FFMpegCommand command=new FFMpegCommand();
+                               int x, int y, int w, int h, double start, double end, double totalTime) {
+        FFMpegCommand command = new FFMpegCommand();
+        command.addCmd("-ss");
+        command.addCmd(start + "");
         command.addCmd("-i");
         command.addCmd(mp4path);
         command.addCmd("-filter_complex");
-        String temp=String.format(Locale.getDefault(),"crop=%d:%d:%d:%d[mid];",w,h,x,y);
+        String temp = String.format(Locale.getDefault(), "crop=%d:%d:%d:%d[mid];", w, h, x, y);
         switch (rotate) {
-            case 0:temp+="[mid]rotate=0";break;
-            case 1:temp+="[mid]rotate=PI/2";break;
-            case 2:temp+="[mid]rotate=PI";break;
-            case 3:temp+="[mid]rotate=-PI/2";break;
+            case 0:
+                temp += "[mid]rotate=0";
+                break;
+            case 1:
+                temp += "[mid]rotate=PI/2";
+                break;
+            case 2:
+                temp += "[mid]rotate=PI";
+                break;
+            case 3:
+                temp += "[mid]rotate=-PI/2";
+                break;
         }
-        temp+="[mid2];";
-        double scale=totalTime/(end-start);
-        temp+=String.format(Locale.getDefault(),"[mid2]setpts=PTS*%f",scale);
+        temp += "[mid2];";
+        double scale = totalTime / (end - start);
+        temp += String.format(Locale.getDefault(), "[mid2]setpts=PTS*%f", scale);
         command.addCmd(temp);
         command.addCmd("-r");
-        command.addCmd(fps+"");
+        command.addCmd(fps + "");
         command.addCmd("-s");
-        command.addCmd(String.format(Locale.getDefault(),"%dx%d",width,height));
+        command.addCmd(String.format(Locale.getDefault(), "%dx%d", width, height));
         command.addCmd("-t");
-        command.addCmd(totalTime+"");
+        command.addCmd(totalTime + "");
         command.addCmd("-y");
         command.addCmd(gifpath);
         ffmpeg_native(command.convertCmd());
         return 0;
     }
+
+    public static int gifreverse(String gifpath, String outgifpath,double outputtime,int w,int h,int rotate) {
+        FFMpegCommand command = new FFMpegCommand();
+        command.addCmd("-i");
+        command.addCmd(gifpath);
+        double scale = outputtime * Utils.gifavgrate(gifpath) / Utils.gifframes(gifpath);
+        command.addCmd("-filter_complex");
+        String temp="";
+        if(rotate==0) {
+            temp += "reverse";
+            temp+=String.format(Locale.getDefault(),"[mid2];[mid2]setpts=PTS*%f",scale);
+        }
+        else {
+            temp += "reverse[mid];";
+
+            switch (rotate) {
+                case 1:
+                    temp += "[mid]rotate=PI/2";
+                    break;
+                case 2:
+                    temp += "[mid]rotate=PI";
+                    break;
+                case 3:
+                    temp += "[mid]rotate=-PI/2";
+                    break;
+            }
+
+        temp+=String.format(Locale.getDefault(),"[mid2];[mid2]setpts=PTS*%f",scale);
+        }
+        command.addCmd(temp);
+        command.addCmd("-s");
+        command.addCmd(String.format(Locale.getDefault(),"%dx%d",(int)((float)w/2)*2,(int)((float)h/2)*2));
+
+        command.addCmd("-t");
+        command.addCmd(outputtime+"");
+        command.addCmd("-y");
+        command.addCmd(outgifpath);
+        ffmpeg_native(command.convertCmd());
+        return 0;
+    }
+
+    public static int mp42mp4(String mp4path, String gifpath, double fps, int rotate, int width, int height,
+                              int x, int y, int w, int h, double start, double end, double totalTime, double bitrate, boolean hasAudio) {
+        FFMpegCommand command = new FFMpegCommand();
+        command.addCmd("-ss");
+        command.addCmd(start + "");
+        command.addCmd("-i");
+        command.addCmd(mp4path);
+        command.addCmd("-filter_complex");
+        String temp = String.format(Locale.getDefault(), "crop=%d:%d:%d:%d[mid];", (int)((float)w/2)*2, (int)((float)h/2)*2, x, y);
+        switch (rotate) {
+            case 0:
+                temp += "[mid]rotate=0";
+                break;
+            case 1:
+                temp += "[mid]rotate=PI/2";
+                break;
+            case 2:
+                temp += "[mid]rotate=PI";
+                break;
+            case 3:
+                temp += "[mid]rotate=-PI/2";
+                break;
+        }
+        temp += "[mid2];";
+        double scale = totalTime / (end - start);
+        if (hasAudio)
+            temp += String.format(Locale.getDefault(), "[mid2]setpts=PTS*%f;atempo=%f", scale, 1 / scale);
+        else
+            temp += String.format(Locale.getDefault(), "[mid2]setpts=PTS*%f", scale);
+        command.addCmd(temp);
+        command.addCmd("-r");
+        command.addCmd(fps + "");
+        command.addCmd("-s");
+        command.addCmd(String.format(Locale.getDefault(), "%dx%d", (int)((float)w/2)*2, (int)((float)h/2)*2));
+        command.addCmd("-t");
+        command.addCmd(totalTime + "");
+        command.addCmd("-b:v");
+        command.addCmd(bitrate + "");
+        command.addCmd("-c:v");
+        command.addCmd("h264");
+        command.addCmd("-pix_fmt");
+        command.addCmd("yuv420p");
+        command.addCmd("-y");
+        command.addCmd(gifpath);
+        ffmpeg_native(command.convertCmd());
+        return 0;
+    }
+
+    public static native boolean isMp4HasAudio(String path);
 
     public static native int[] getMp4Size(String path);
 
@@ -421,9 +532,9 @@ public class Utils {
                             bitmap.compress(Bitmap.CompressFormat.JPEG, 80, outputStream);
                             Bitmap bitmap1 = BitmapFactory.decodeFile(output);
                             preferences.edit().putString(path, md5).apply();
-                            int[] size=getMp4Size(path);
-                            if(size!=null){
-                                Mp4Info info=new Mp4Info(path,size[0],size[1]);
+                            int[] size = getMp4Size(path);
+                            if (size != null) {
+                                Mp4Info info = new Mp4Info(path, size[0], size[1]);
                                 info.setThumbnail(bitmap1);
                                 ret.add(info);
                             }
@@ -437,9 +548,9 @@ public class Utils {
                     }
                 } else {
                     preferences.edit().putString(path, md5).apply();
-                    int[] size=getMp4Size(path);
-                    if(size!=null){
-                        Mp4Info info=new Mp4Info(path,size[0],size[1]);
+                    int[] size = getMp4Size(path);
+                    if (size != null) {
+                        Mp4Info info = new Mp4Info(path, size[0], size[1]);
                         info.setThumbnail(BitmapFactory.decodeFile(f2.getAbsolutePath()));
                         ret.add(info);
                     }
@@ -448,9 +559,9 @@ public class Utils {
                 String md5 = preferences.getString(path, "");
                 String output = getDir(".cache") + md5 + ".jpg";
                 Bitmap bitmap = BitmapFactory.decodeFile(output);
-                int[] size=getMp4Size(path);
-                if(size!=null){
-                    Mp4Info info=new Mp4Info(path,size[0],size[1]);
+                int[] size = getMp4Size(path);
+                if (size != null) {
+                    Mp4Info info = new Mp4Info(path, size[0], size[1]);
                     info.setThumbnail(bitmap);
                     ret.add(info);
                 }
@@ -465,10 +576,10 @@ public class Utils {
     }
 
 
-    public static String mills2Str(int position) {
-        int milli=position%1000;
-        int second=position/1000%60;
-        int minus=(position/1000)/60;
-        return String.format(Locale.getDefault(),"%d:%02d.%03d",minus,second,milli);
+    public static String mills2Str(long position) {
+        long milli = position % 1000;
+        long second = position / 1000 % 60;
+        long minus = (position / 1000) / 60;
+        return String.format(Locale.getDefault(), "%d:%02d.%03d", minus, second, milli);
     }
 }
