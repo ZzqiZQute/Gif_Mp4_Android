@@ -41,7 +41,7 @@ import zz.app.gif2mp4.interfaces.IGoBack;
 public class GifListViewAdapter extends RecyclerView.Adapter<GifListViewAdapter.ViewHolder> {
 
     private final Handler handler;
-    private ArrayList<File> files;
+    private ArrayList<String> files;
     private Context context;
     private static final String TAG = "GifListViewAdapter";
 
@@ -54,7 +54,7 @@ public class GifListViewAdapter extends RecyclerView.Adapter<GifListViewAdapter.
     }
 
     private boolean ready=false;
-    public GifListViewAdapter(Context context, Handler handler, ArrayList<File> files) {
+    public GifListViewAdapter(Context context, Handler handler, ArrayList<String> files) {
         this.files = files;
         this.context = context;
         this.handler=handler;
@@ -69,7 +69,7 @@ public class GifListViewAdapter extends RecyclerView.Adapter<GifListViewAdapter.
     @Override
     public void onBindViewHolder(final ViewHolder viewHolder, int i) {
         if (i > 0 && i < files.size() + 1) {
-            viewHolder.cvHintHolder.setVisibility(View.INVISIBLE);
+            viewHolder.cvHintHolder.setVisibility(View.GONE);
             ViewGroup.LayoutParams params = viewHolder.cardView.getLayoutParams();
             Point size = new Point();
             ((ShowGifActivity) context).getWindowManager().getDefaultDisplay().getSize(size);
@@ -83,7 +83,7 @@ public class GifListViewAdapter extends RecyclerView.Adapter<GifListViewAdapter.
             viewHolder.tvImageName.setVisibility(View.GONE);
             viewHolder.tvImageName.setSelected(true);
             final ImageView gifView = viewHolder.imageView;
-            GifRequestBuilder builder = Glide.with(context).load(files.get(i-1)).asGif().diskCacheStrategy(DiskCacheStrategy.SOURCE).listener(new RequestListener<File, GifDrawable>() {
+            GifRequestBuilder builder = Glide.with(context).load(new File(files.get(i-1))).asGif().diskCacheStrategy(DiskCacheStrategy.SOURCE).listener(new RequestListener<File, GifDrawable>() {
                 @Override
                 public boolean onException(Exception e, File model, Target<GifDrawable> target, boolean isFirstResource) {
                     viewHolder.tvLoadingHint.setVisibility(View.INVISIBLE);
@@ -97,7 +97,7 @@ public class GifListViewAdapter extends RecyclerView.Adapter<GifListViewAdapter.
                 }
             }).error(R.drawable.resourceerr);
             builder.into(gifView);
-            viewHolder.tvImageName.setText(files.get(i-1).getName());
+            viewHolder.tvImageName.setText(new File(files.get(i-1)).getName());
             gifView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(final View v) {
@@ -105,7 +105,7 @@ public class GifListViewAdapter extends RecyclerView.Adapter<GifListViewAdapter.
                     //Intent intent = new Intent(context, TestActivity.class);
                     ShowGifActivity activity = ((ShowGifActivity) context);
                     if (null != gifView.getDrawable() && gifView.getDrawable() instanceof GifDrawable) {
-                        if (!Utils.checkgif(files.get(viewHolder.getPosition()-1).getAbsolutePath())) {
+                        if (!Utils.checkgif(new File(files.get(viewHolder.getPosition()-1)).getAbsolutePath())) {
                             Toast.makeText(activity, "无效的Gif文件或为静态Gif", Toast.LENGTH_SHORT).show();
                         } else {
                             Utils.getManager().gif2mp4handler = new ActivityTransitionController((ShowGifActivity) context);
@@ -121,7 +121,7 @@ public class GifListViewAdapter extends RecyclerView.Adapter<GifListViewAdapter.
                                     from.back();
                                 }
                             });
-                            intent.putExtra("inputPath", files.get(viewHolder.getPosition()-1).getAbsolutePath());
+                            intent.putExtra("inputPath", new File(files.get(viewHolder.getPosition()-1)).getAbsolutePath());
 
                             int w = gifView.getWidth();
                             int h = gifView.getHeight();
@@ -152,7 +152,7 @@ public class GifListViewAdapter extends RecyclerView.Adapter<GifListViewAdapter.
                     builder1.setMessage("是否删除Gif？").setPositiveButton("是", new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialogInterface, int i) {
-                            boolean b = FileUtils.deleteQuietly(files.get(viewHolder.getPosition()-1));
+                            boolean b = FileUtils.deleteQuietly(new File(files.get(viewHolder.getPosition()-1)));
                             ShowGifActivity activity = ((ShowGifActivity) context);
                             activity.freshimg();
                         }
@@ -169,7 +169,7 @@ public class GifListViewAdapter extends RecyclerView.Adapter<GifListViewAdapter.
         }else{
 
             viewHolder.cvHintHolder.setVisibility(View.INVISIBLE);
-            viewHolder.cardView.setVisibility(View.INVISIBLE);
+            viewHolder.cardView.setVisibility(View.GONE);
             if(ready) {
                 viewHolder.cvHintHolder.setRadius(30);
                 viewHolder.cvHintHolder.setVisibility(View.VISIBLE);
@@ -194,11 +194,11 @@ public class GifListViewAdapter extends RecyclerView.Adapter<GifListViewAdapter.
         return files.size()+2;
     }
 
-    public ArrayList<File> getFiles() {
+    public ArrayList<String> getFiles() {
         return files;
     }
 
-    public void setFiles(ArrayList<File> files) {
+    public void setFiles(ArrayList<String> files) {
         this.files = files;
     }
 

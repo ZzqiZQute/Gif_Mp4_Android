@@ -12,6 +12,7 @@ import android.os.Message;
 import android.support.v7.widget.RecyclerView;
 import android.text.Html;
 import android.text.Spanned;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
@@ -60,6 +61,7 @@ public class G2MConfigAdapter extends RecyclerView.Adapter<G2MConfigAdapter.View
     private AlertDialog encoderdlg;
     private boolean showpic = true;
     private boolean ready = false;
+    private static final String TAG = "G2MConfigAdapter";
 
     public int getRotateType() {
         return rotateType;
@@ -80,7 +82,7 @@ public class G2MConfigAdapter extends RecyclerView.Adapter<G2MConfigAdapter.View
         return outgifrate;
     }
 
-    private double outgifrate;
+    private double outgifrate=30;
 
     public int getEncodertypenum() {
         return encodertypenum;
@@ -182,6 +184,7 @@ public class G2MConfigAdapter extends RecyclerView.Adapter<G2MConfigAdapter.View
             v2.setPadding(0, 15, 0, 25);
             v2.setText(new File(gifpath).getName());
             v2.setGravity(Gravity.CENTER);
+            v2.setVisibility(View.INVISIBLE);
             layout.addView(v2);
             ViewHolder viewHolder = new ViewHolder(layout);
             viewHolder.ivgifpreview = v;
@@ -217,7 +220,7 @@ public class G2MConfigAdapter extends RecyclerView.Adapter<G2MConfigAdapter.View
                 if (gifframes == 0)
                     viewHolder.tvoptionvalue.setText("?");
                 else {
-                    String s = String.format(Locale.getDefault(), "帧数:%d 帧率:%.1f/s\n时长:%.1fs 大小:%s", gifframes, gifrate, gifframes / gifrate, Utils.size2String(FileUtils.sizeOf(new File(gifpath))));
+                    String s = String.format(Locale.getDefault(), "帧数:%d\n时长:%.2fs\n大小:%s", gifframes, predicttime, Utils.size2String(FileUtils.sizeOf(new File(gifpath))));
                     viewHolder.tvoptionvalue.setText(s);
                 }
 
@@ -463,11 +466,11 @@ public class G2MConfigAdapter extends RecyclerView.Adapter<G2MConfigAdapter.View
         return 8;
     }
 
-    public void setGifOptions(int frames, float rate) {
+    public void setGifOptions(int frames, long endpts) {
         gifframes = frames;
-        gifrate = rate;
-        outgifrate = rate;
-        predicttime = new BigDecimal(gifframes / gifrate).setScale(2, RoundingMode.HALF_UP).doubleValue();
+        Log.e(TAG, "setGifOptions: endpts="+endpts );
+        predicttime= (double)endpts/100;
+        gifrate = (frames*100/endpts);
         outputtime = predicttime;
         notifyDataSetChanged();
     }

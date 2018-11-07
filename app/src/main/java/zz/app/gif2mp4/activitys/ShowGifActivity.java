@@ -29,7 +29,7 @@ import zz.app.gif2mp4.interfaces.IGoBack;
 
 public class ShowGifActivity extends AppCompatActivity implements SwipeRefreshLayout.OnRefreshListener,IGoBack {
     RecyclerView giflistview;
-    ArrayList<File> files;
+    ArrayList<String> files;
     SwipeRefreshLayout swipeRefreshLayout;
     GifListViewAdapter adapter;
     AlertDialog sortdialog;
@@ -95,7 +95,7 @@ public class ShowGifActivity extends AppCompatActivity implements SwipeRefreshLa
         swipeRefreshLayout.setOnRefreshListener(this);
         giflistview = findViewById(R.id.giflistview);
         giflistview.setLayoutManager(new LinearLayoutManager(this));
-        adapter = new GifListViewAdapter(this,handler, new ArrayList<File>());
+        adapter = new GifListViewAdapter(this,handler, new ArrayList<String>());
         giflistview.setAdapter(adapter);
         freshimg();
     }

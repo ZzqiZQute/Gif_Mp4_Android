@@ -31,7 +31,7 @@ import zz.app.gif2mp4.beans.Mp4Info;
 import zz.app.gif2mp4.interfaces.IGoBack;
 
 public class ShowMp4Activity extends AppCompatActivity implements SwipeRefreshLayout.OnRefreshListener, IGoBack {
-    ArrayList<File> files;
+    ArrayList<String> files;
     ArrayList<Mp4Info> mp4Infos;
     SwipeRefreshLayout swipeRefreshLayout;
     Mp4ListViewAdapter adapter;

@@ -58,6 +58,8 @@ public class GifActivity extends AppCompatActivity {
     GifOptions gifOptions;
     G2MConfigAdapter adapter;
     Button btnOutput;
+    Button btnOutputGif;
+    Button btnGifJump;
     Button btnGifReverse;
     Thread convertThread;
     Thread readProgressThread;
@@ -207,13 +209,13 @@ public class GifActivity extends AppCompatActivity {
                                 } catch (InterruptedException e) {
                                     e.printStackTrace();
                                 }
-                                Utils.setAnalyseState(Utils.AnalyseState.Gif2Mp4);
+
                                 Utils.setTotalTime(adapter.getOutputtime());
                                 int rotateType = adapter.getRotateType();
                                 if (rotateType == 0 || rotateType == 2) {
-                                    Utils.gif2mp42(gifpath, outputPath, adapter.getEncodertypenum(), adapter.getBitrate(), adapter.getOutputtime(), (int) (adapter.getWidth() * adapter.getScale()), (int) (adapter.getHeight() * adapter.getScale()), rotateType, adapter.getOutgifrate());
+                                    Utils.gif2mp42(gifpath, outputPath, adapter.getEncodertypenum(), adapter.getBitrate(), adapter.getOutputtime(), adapter.getPredicttime(), (int) (adapter.getWidth() * adapter.getScale()), (int) (adapter.getHeight() * adapter.getScale()), rotateType, adapter.getOutgifrate());
                                 } else {
-                                    Utils.gif2mp42(gifpath, outputPath, adapter.getEncodertypenum(), adapter.getBitrate(), adapter.getOutputtime(), (int) (adapter.getHeight() * adapter.getScale()), (int) (adapter.getWidth() * adapter.getScale()), rotateType, adapter.getOutgifrate());
+                                    Utils.gif2mp42(gifpath, outputPath, adapter.getEncodertypenum(), adapter.getBitrate(), adapter.getOutputtime(), adapter.getPredicttime(), (int) (adapter.getHeight() * adapter.getScale()), (int) (adapter.getWidth() * adapter.getScale()), rotateType, adapter.getOutgifrate());
                                 }
                                 Utils.setProgress2(0);
                                 handler.obtainMessage(MSG_CONVERTFINISH).sendToTarget();
@@ -274,7 +276,6 @@ public class GifActivity extends AppCompatActivity {
                                 } catch (InterruptedException e) {
                                     e.printStackTrace();
                                 }
-                                Utils.setAnalyseState(Utils.AnalyseState.Gif2Mp4);
                                 Utils.setTotalTime(adapter.getOutputtime());
                                 int rotateType = adapter.getRotateType();
                                 double scale = adapter.getScale();
@@ -285,9 +286,9 @@ public class GifActivity extends AppCompatActivity {
                                     temp = adapter.getScale();
                                 }
                                 if (rotateType == 0 || rotateType == 2) {
-                                    Utils.gifreverse(gifpath, outputPath, adapter.getOutputtime(), (int) (adapter.getWidth() * temp), (int) (adapter.getHeight() * temp), rotateType);
+                                    Utils.gifreverse(gifpath, outputPath, adapter.getOutputtime(), adapter.getPredicttime(), (int) (adapter.getWidth() * temp), (int) (adapter.getHeight() * temp), rotateType);
                                 } else {
-                                    Utils.gifreverse(gifpath, outputPath, adapter.getOutputtime(), (int) (adapter.getHeight() * temp), (int) (adapter.getWidth() * temp), rotateType);
+                                    Utils.gifreverse(gifpath, outputPath, adapter.getOutputtime(), adapter.getPredicttime(), (int) (adapter.getHeight() * temp), (int) (adapter.getWidth() * temp), rotateType);
                                 }
                                 Utils.setProgress2(0);
                                 handler.obtainMessage(MSG_CONVERTFINISH).sendToTarget();
@@ -324,6 +325,148 @@ public class GifActivity extends AppCompatActivity {
 
             }
         });
+        btnOutputGif = findViewById(R.id.btnoutputgif);
+        btnOutputGif.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                new AlertDialog.Builder(GifActivity.this).setTitle("提示").setMessage("即将转换，是否确认？").setPositiveButton("是", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        Calendar calendar = Calendar.getInstance();
+                        SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmss", Locale.getDefault());
+                        String str = format.format(calendar.getTime());
+                        outputPath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Gif_Mp4/Gif/" + str + ".gif";
+                        File f = new File(outputPath);
+                        if (f.exists()) {
+                            FileUtils.deleteQuietly(f);
+                        }
+                        convertThread = new Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                try {
+                                    Thread.sleep(500);
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
+                                Utils.setTotalTime(adapter.getOutputtime());
+                                int rotateType = adapter.getRotateType();
+                                double scale = adapter.getScale();
+                                double temp;
+                                if (Math.abs(scale - 1) < 0.01) {
+                                    temp = 0;
+                                } else {
+                                    temp = adapter.getScale();
+                                }
+                                if (rotateType == 0 || rotateType == 2) {
+                                    Utils.gif2gif(gifpath, outputPath, adapter.getOutputtime(), adapter.getPredicttime(), (int) (adapter.getWidth() * temp), (int) (adapter.getHeight() * temp), rotateType);
+                                } else {
+                                    Utils.gif2gif(gifpath, outputPath, adapter.getOutputtime(), adapter.getPredicttime(), (int) (adapter.getHeight() * temp), (int) (adapter.getWidth() * temp), rotateType);
+                                }
+                                Utils.setProgress2(0);
+                                handler.obtainMessage(MSG_CONVERTFINISH).sendToTarget();
+                                convertThread = null;
+                                if (readProgressThread != null && !readProgressThread.isInterrupted()) {
+                                    readProgressThread.interrupt();
+                                    readProgressThread = null;
+                                }
+                            }
+                        });
+                        readProgressThread = new Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                while (!Thread.interrupted()) {
+                                    String line = Utils.getAnalyseLine();
+                                    Utils.analyseProgress(line);
+                                    progress = Utils.getProgress2();
+                                    if (progress != lastprogress) {
+                                        lastprogress = progress;
+                                        handler.obtainMessage(MSG_CONVERTPROGRESSCHANGED).sendToTarget();
+                                    }
+                                }
+                            }
+                        });
+                        View v = View.inflate(GifActivity.this, R.layout.convertdialoglayout, null);
+                        pbConvert = v.findViewById(R.id.pbconvert);
+                        tvConvertProgress = v.findViewById(R.id.tvconvertprogress);
+                        tvConvertProgress.setText("0%");
+                        convertDialog = new AlertDialog.Builder(GifActivity.this).setView(v).setCancelable(false).show();
+                        convertThread.start();
+                        readProgressThread.start();
+                    }
+                }).setNegativeButton("否", null).show();
+            }
+        });
+        btnGifJump=findViewById(R.id.btngifjump);
+        btnGifJump.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                new AlertDialog.Builder(GifActivity.this).setTitle("提示").setMessage("即将转换，是否确认？").setPositiveButton("是", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        Calendar calendar = Calendar.getInstance();
+                        SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmss", Locale.getDefault());
+                        String str = format.format(calendar.getTime());
+                        outputPath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Gif_Mp4/Gif/" + str + ".gif";
+                        File f = new File(outputPath);
+                        if (f.exists()) {
+                            FileUtils.deleteQuietly(f);
+                        }
+                        convertThread = new Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                try {
+                                    Thread.sleep(500);
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
+                                Utils.setTotalTime(adapter.getOutputtime());
+                                int rotateType = adapter.getRotateType();
+                                double scale = adapter.getScale();
+                                double temp;
+                                if (Math.abs(scale - 1) < 0.01) {
+                                    temp = 0;
+                                } else {
+                                    temp = adapter.getScale();
+                                }
+                                if (rotateType == 0 || rotateType == 2) {
+                                    Utils.gifjump(gifpath, outputPath, adapter.getOutputtime(), adapter.getPredicttime(), (int) (adapter.getWidth() * temp), (int) (adapter.getHeight() * temp), rotateType);
+                                } else {
+                                    Utils.gifjump(gifpath, outputPath, adapter.getOutputtime(), adapter.getPredicttime(), (int) (adapter.getHeight() * temp), (int) (adapter.getWidth() * temp), rotateType);
+                                }
+                                Utils.setProgress2(0);
+                                handler.obtainMessage(MSG_CONVERTFINISH).sendToTarget();
+                                convertThread = null;
+                                if (readProgressThread != null && !readProgressThread.isInterrupted()) {
+                                    readProgressThread.interrupt();
+                                    readProgressThread = null;
+                                }
+                            }
+                        });
+                        readProgressThread = new Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                while (!Thread.interrupted()) {
+                                    String line = Utils.getAnalyseLine();
+                                    Utils.analyseProgress(line);
+                                    progress = Utils.getProgress2();
+                                    if (progress != lastprogress) {
+                                        lastprogress = progress;
+                                        handler.obtainMessage(MSG_CONVERTPROGRESSCHANGED).sendToTarget();
+                                    }
+                                }
+                            }
+                        });
+                        View v = View.inflate(GifActivity.this, R.layout.convertdialoglayout, null);
+                        pbConvert = v.findViewById(R.id.pbconvert);
+                        tvConvertProgress = v.findViewById(R.id.tvconvertprogress);
+                        tvConvertProgress.setText("0%");
+                        convertDialog = new AlertDialog.Builder(GifActivity.this).setView(v).setCancelable(false).show();
+                        convertThread.start();
+                        readProgressThread.start();
+                    }
+                }).setNegativeButton("否", null).show();
+            }
+        });
         setTitle("输出配置");
         handler = new Handler(new Handler.Callback() {
             @Override
@@ -331,7 +474,7 @@ public class GifActivity extends AppCompatActivity {
                 switch (message.what) {
                     case MSG_READGIFFRAMES:
                         gifOptions = (GifOptions) message.obj;
-                        adapter.setGifOptions(gifOptions.frames, gifOptions.rate);
+                        adapter.setGifOptions(gifOptions.frames, gifOptions.endpts);
                         adapter.notifyItemChanged(1);
                         adapter.notifyItemChanged(4);
                         try {
@@ -421,14 +564,16 @@ public class GifActivity extends AppCompatActivity {
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
-                        int frames = Utils.gifframes(gifpath);
-                        float rate = Utils.gifavgrate(gifpath);
+                        long[] ret = Utils.gifframesAndTime(gifpath);
+                        int frames = (int) ret[0];
+                        long endpts = ret[1];
+
                         try {
                             Thread.sleep(500);
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
-                        handler.obtainMessage(MSG_READGIFFRAMES, new GifOptions(frames, rate)).sendToTarget();
+                        handler.obtainMessage(MSG_READGIFFRAMES, new GifOptions(frames, endpts)).sendToTarget();
                     }
                 }).start();
             }
@@ -554,11 +699,11 @@ public class GifActivity extends AppCompatActivity {
 
     class GifOptions {
         int frames;
-        float rate;
+        long endpts;
 
-        public GifOptions(int frames, float rate) {
+        public GifOptions(int frames, long endpts) {
             this.frames = frames;
-            this.rate = rate;
+            this.endpts = endpts;
         }
     }
 

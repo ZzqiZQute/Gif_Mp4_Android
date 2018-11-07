@@ -20,6 +20,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.security.MessageDigest;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -45,19 +46,6 @@ public class Utils {
 
     public native static String getAnalyseLine();
 
-    public enum AnalyseState {
-        None, Gif2Mp4, Mp42Gif, Mp42Mp4, GifReverse
-    }
-
-    private static AnalyseState analyseState = AnalyseState.None;
-
-    public static AnalyseState getAnalyseState() {
-        return analyseState;
-    }
-
-    public static void setAnalyseState(AnalyseState analyseState) {
-        Utils.analyseState = analyseState;
-    }
 
     public static Double getTotalTime() {
         return totalTime;
@@ -123,47 +111,50 @@ public class Utils {
         return ret.toString();
     }
 
-    public static ArrayList<File> getFiles(String type, int sortType, boolean ascending, boolean expecterror) {
-        ArrayList<File> files;
-        files = new ArrayList<>(FileUtils.listFiles(Environment.getExternalStorageDirectory(), FileFilterUtils.suffixFileFilter(type), DirectoryFileFilter.INSTANCE));
-        Log.d(TAG, "getFiles: size=" + files.size());
+    public static ArrayList<String> getFiles(String type, int sortType, boolean ascending, boolean expecterror) {
+        ArrayList<String> files;
+        files = new ArrayList<>();
+        Collection<File> list = FileUtils.listFiles(Environment.getExternalStorageDirectory(), FileFilterUtils.suffixFileFilter(type), DirectoryFileFilter.INSTANCE);
+        for (File l : list) {
+            files.add(l.getAbsolutePath());
+        }
         sortFiles(files, sortType, ascending);
         if (expecterror && type.equals("gif"))
             files = exceptErrorGif(files);
         return files;
     }
 
-    private static ArrayList<File> exceptErrorGif(ArrayList<File> files) {
-        ArrayList<File> ret = new ArrayList<>();
-        for (File file : files) {
-            if (checkgif(file.getAbsolutePath())) {
-                ret.add(file);
+    private static ArrayList<String> exceptErrorGif(ArrayList<String> files) {
+        ArrayList<String> ret = new ArrayList<>();
+        for (String path : files) {
+            if (checkgif(path)){
+                ret.add(path);
             }
         }
         return ret;
     }
 
-    private static void sortFiles(ArrayList<File> files, int type, boolean ascending) {
+    private static void sortFiles(ArrayList<String> files, int type, boolean ascending) {
         if (type == SORTTYPE_TIME) {
             for (int i = 1; i < files.size(); i++) {
                 int k = -1;
                 for (int j = i; j >= 0; j--) {
                     if (ascending) {
-                        if (files.get(j).lastModified() > files.get(i).lastModified()) {
+                        if (new File(files.get(j)).lastModified() > new File(files.get(i)).lastModified()) {
                             k = j;
                         }
                     } else {
-                        if (files.get(j).lastModified() < files.get(i).lastModified()) {
+                        if (new File(files.get(j)).lastModified() < new File(files.get(i)).lastModified()) {
                             k = j;
                         }
                     }
                 }
                 if (k != -1) {
-                    File f = files.get(i);
+                    File f = new File(files.get(i));
                     for (int m = i; m > k; m--) {
                         files.set(m, files.get(m - 1));
                     }
-                    files.set(k, f);
+                    files.set(k, f.getAbsolutePath());
                 }
             }
         } else if (type == SORTTYPE_NAME) {
@@ -171,21 +162,21 @@ public class Utils {
                 int k = -1;
                 for (int j = i; j >= 0; j--) {
                     if (ascending) {
-                        if (files.get(j).getName().compareTo(files.get(i).getName()) > 0) {
+                        if (new File(files.get(j)).getName().compareTo(new File(files.get(i)).getName()) > 0) {
                             k = j;
                         }
                     } else {
-                        if (files.get(j).getName().compareTo(files.get(i).getName()) < 0) {
+                        if (new File(files.get(j)).getName().compareTo(new File(files.get(i)).getName()) < 0) {
                             k = j;
                         }
                     }
                 }
                 if (k != -1) {
-                    File f = files.get(i);
+                    File f = new File(files.get(i));
                     for (int m = i; m > k; m--) {
                         files.set(m, files.get(m - 1));
                     }
-                    files.set(k, f);
+                    files.set(k, f.getAbsolutePath());
                 }
             }
         } else if (type == SORTTYPE_SIZE) {
@@ -193,21 +184,21 @@ public class Utils {
                 int k = -1;
                 for (int j = i; j >= 0; j--) {
                     if (ascending) {
-                        if (FileUtils.sizeOf(files.get(j)) > FileUtils.sizeOf(files.get(i))) {
+                        if (FileUtils.sizeOf(new File(files.get(j))) > FileUtils.sizeOf(new File(files.get(i)))) {
                             k = j;
                         }
                     } else {
-                        if (FileUtils.sizeOf(files.get(j)) < FileUtils.sizeOf(files.get(i))) {
+                        if (FileUtils.sizeOf(new File(files.get(j))) < FileUtils.sizeOf(new File(files.get(i)))) {
                             k = j;
                         }
                     }
                 }
                 if (k != -1) {
-                    File f = files.get(i);
+                    File f = new File(files.get(i));
                     for (int m = i; m > k; m--) {
                         files.set(m, files.get(m - 1));
                     }
-                    files.set(k, f);
+                    files.set(k, f.getAbsolutePath());
                 }
             }
         }
@@ -305,11 +296,24 @@ public class Utils {
 
     public static native int gifframes(String gifpath);
 
+    public static native long[] gifframesAndTime(String gifpath);
+
     public static native float gifavgrate(String gifpath);
 
     public static native int gif2mp4(String gifpath, String mp4path, int encodertypenum, double bitrate, double outputtime, int framecnt);
 
-    public static int gif2mp42(String gifpath, String mp4path, int encodertypenum, double bitrate, double outputtime,int w,int h,int rotate,double rate) {
+    public static native boolean isMp4HasAudio(String path);
+
+    public static native int[] getMp4Size(String path);
+
+    public static native long[] getMp4Info(String info);
+
+    public static native int ffmpeg_native(String[] cmd);
+
+    public static native int mp42gif(String mp4path, String gifpath, double fps, int rotate, int width, int height, double start, double timeScale);
+
+
+    public static int gif2mp42(String gifpath, String mp4path, int encodertypenum, double bitrate, double outputtime, double actualTime, int w, int h, int rotate, double rate) {
         FFMpegCommand command = new FFMpegCommand();
         command.addCmd("-i");
         command.addCmd(gifpath);
@@ -321,9 +325,9 @@ public class Utils {
         command.addCmd("-an");
         command.addCmd("-b:v");
         command.addCmd(Utils.bitrate2String(bitrate));
-        double scale = outputtime * Utils.gifavgrate(gifpath) / Utils.gifframes(gifpath);
+        double scale = outputtime / actualTime;
         command.addCmd("-filter_complex");
-        String temp=String.format(Locale.getDefault(), "crop=floor(in_w/2)*2:floor(in_h/2)*2[mid2];[mid2]setpts=PTS*%f[mid];", scale);
+        String temp = String.format(Locale.getDefault(), "crop=floor(in_w/2)*2:floor(in_h/2)*2[mid2];[mid2]setpts=PTS*%f[mid];", scale);
         switch (rotate) {
             case 0:
                 temp += "[mid]rotate=0";
@@ -340,11 +344,11 @@ public class Utils {
         }
         command.addCmd(temp);
         command.addCmd("-s");
-        command.addCmd(String.format(Locale.getDefault(),"%dx%d",(int)((float)w/2)*2,(int)((float)h/2)*2));
+        command.addCmd(String.format(Locale.getDefault(), "%dx%d", (int) ((float) w / 2) * 2, (int) ((float) h / 2) * 2));
         command.addCmd("-r");
-        command.addCmd(rate+"");
+        command.addCmd(rate + "");
         command.addCmd("-t");
-        command.addCmd(outputtime+"");
+        command.addCmd(outputtime + "");
         command.addCmd("-pix_fmt");
         command.addCmd("yuv420p");
         command.addCmd("-y");
@@ -353,7 +357,37 @@ public class Utils {
         return 0;
     }
 
-    public static native int ffmpeg_native(String[] cmd);
+    public static int gif2gif(String gifpath, String gifpath2, double outputtime, double actualTime, int w, int h, int rotate) {
+        FFMpegCommand command = new FFMpegCommand();
+        command.addCmd("-i");
+        command.addCmd(gifpath);
+        double scale = outputtime / actualTime;
+        command.addCmd("-filter_complex");
+        String temp = String.format(Locale.getDefault(), "crop=floor(in_w/2)*2:floor(in_h/2)*2[mid2];[mid2]setpts=PTS*%f[mid];", scale);
+        switch (rotate) {
+            case 0:
+                temp += "[mid]rotate=0";
+                break;
+            case 1:
+                temp += "[mid]rotate=PI/2";
+                break;
+            case 2:
+                temp += "[mid]rotate=PI";
+                break;
+            case 3:
+                temp += "[mid]rotate=-PI/2";
+                break;
+        }
+        command.addCmd(temp);
+        command.addCmd("-s");
+        command.addCmd(String.format(Locale.getDefault(), "%dx%d", (int) ((float) w / 2) * 2, (int) ((float) h / 2) * 2));
+
+        command.addCmd("-y");
+        command.addCmd(gifpath2);
+        ffmpeg_native(command.convertCmd());
+        return 0;
+    }
+
 
     public static void analyseProgress(String line) {
         Pattern pattern = Pattern.compile("(?:.*)PTS(?:.*)T:(.*)");
@@ -368,7 +402,6 @@ public class Utils {
         }
     }
 
-    public static native int mp42gif(String mp4path, String gifpath, double fps, int rotate, int width, int height, double start, double timeScale);
 
     public static int mp42gif2(String mp4path, String gifpath, double fps, int rotate, int width, int height,
                                int x, int y, int w, int h, double start, double end, double totalTime) {
@@ -409,18 +442,17 @@ public class Utils {
         return 0;
     }
 
-    public static int gifreverse(String gifpath, String outgifpath,double outputtime,int w,int h,int rotate) {
+    public static int gifreverse(String gifpath, String outgifpath, double outputtime, double actualtime, int w, int h, int rotate) {
         FFMpegCommand command = new FFMpegCommand();
         command.addCmd("-i");
         command.addCmd(gifpath);
-        double scale = outputtime * Utils.gifavgrate(gifpath) / Utils.gifframes(gifpath);
+        double scale = outputtime / actualtime;
         command.addCmd("-filter_complex");
-        String temp="";
-        if(rotate==0) {
+        String temp = "";
+        if (rotate == 0) {
             temp += "reverse";
-            temp+=String.format(Locale.getDefault(),"[mid2];[mid2]setpts=PTS*%f",scale);
-        }
-        else {
+            temp += String.format(Locale.getDefault(), "[mid2];[mid2]setpts=PTS*%f", scale);
+        } else {
             temp += "reverse[mid];";
 
             switch (rotate) {
@@ -435,14 +467,71 @@ public class Utils {
                     break;
             }
 
-        temp+=String.format(Locale.getDefault(),"[mid2];[mid2]setpts=PTS*%f",scale);
+            temp += String.format(Locale.getDefault(), "[mid2];[mid2]setpts=PTS*%f", scale);
         }
         command.addCmd(temp);
         command.addCmd("-s");
-        command.addCmd(String.format(Locale.getDefault(),"%dx%d",(int)((float)w/2)*2,(int)((float)h/2)*2));
+        command.addCmd(String.format(Locale.getDefault(), "%dx%d", (int) ((float) w / 2) * 2, (int) ((float) h / 2) * 2));
 
-        command.addCmd("-t");
-        command.addCmd(outputtime+"");
+        command.addCmd("-y");
+        command.addCmd(outgifpath);
+        ffmpeg_native(command.convertCmd());
+        return 0;
+    }
+
+    public static int gifjump(String gifpath, String outgifpath, double outputtime, double actualtime, int w, int h, int rotate) {
+        FFMpegCommand command = new FFMpegCommand();
+        command.addCmd("-i");
+        command.addCmd(gifpath);
+        command.addCmd("-i");
+        command.addCmd(gifpath);
+        double scale = outputtime / 2 / actualtime;
+        command.addCmd("-filter_complex");
+        String temp = "";
+        if (rotate == 0) {
+            temp += "[1:v]reverse[mid2];";
+            temp += String.format(Locale.getDefault(), "[mid2]setpts=PTS*%f[v1];", scale);
+        } else {
+            temp += "reverse[mid];";
+            switch (rotate) {
+                case 1:
+                    temp += "[mid]rotate=PI/2";
+                    break;
+                case 2:
+                    temp += "[mid]rotate=PI";
+                    break;
+                case 3:
+                    temp += "[mid]rotate=-PI/2";
+                    break;
+            }
+
+            temp += String.format(Locale.getDefault(), "[mid2];[mid2]setpts=PTS*%f[v1];", scale);
+        }
+        if (rotate == 0) {
+            temp += String.format(Locale.getDefault(), "[0:v]setpts=PTS*%f[v2];", scale);
+        } else {
+            switch (rotate) {
+                case 1:
+                    temp += "[0:v]rotate=PI/2";
+                    break;
+                case 2:
+                    temp += "[0:v]rotate=PI";
+                    break;
+                case 3:
+                    temp += "[0:v]rotate=-PI/2";
+                    break;
+            }
+
+            temp += String.format(Locale.getDefault(), "[mid3];[mid3]setpts=PTS*%f[v2];", scale);
+        }
+        temp += "[v2][v1]concat=n=2:v=1:a=0[v]";
+        command.addCmd(temp);
+        command.addCmd("-map");
+        command.addCmd("[v]");
+
+        command.addCmd("-s");
+        command.addCmd(String.format(Locale.getDefault(), "%dx%d", (int) ((float) w / 2) * 2, (int) ((float) h / 2) * 2));
+
         command.addCmd("-y");
         command.addCmd(outgifpath);
         ffmpeg_native(command.convertCmd());
@@ -457,7 +546,7 @@ public class Utils {
         command.addCmd("-i");
         command.addCmd(mp4path);
         command.addCmd("-filter_complex");
-        String temp = String.format(Locale.getDefault(), "crop=%d:%d:%d:%d[mid];", (int)((float)w/2)*2, (int)((float)h/2)*2, x, y);
+        String temp = String.format(Locale.getDefault(), "crop=%d:%d:%d:%d[mid];", (int) ((float) w / 2) * 2, (int) ((float) h / 2) * 2, x, y);
         switch (rotate) {
             case 0:
                 temp += "[mid]rotate=0";
@@ -482,7 +571,7 @@ public class Utils {
         command.addCmd("-r");
         command.addCmd(fps + "");
         command.addCmd("-s");
-        command.addCmd(String.format(Locale.getDefault(), "%dx%d", (int)((float)w/2)*2, (int)((float)h/2)*2));
+        command.addCmd(String.format(Locale.getDefault(), "%dx%d", (int) ((float) w / 2) * 2, (int) ((float) h / 2) * 2));
         command.addCmd("-t");
         command.addCmd(totalTime + "");
         command.addCmd("-b:v");
@@ -497,18 +586,13 @@ public class Utils {
         return 0;
     }
 
-    public static native boolean isMp4HasAudio(String path);
 
-    public static native int[] getMp4Size(String path);
-
-    public static native long[] getMp4Info(String info);
-
-    public static ArrayList<Mp4Info> getThumbnailMap(Context context, ArrayList<File> files) {
+    public static ArrayList<Mp4Info> getThumbnailMap(Context context, ArrayList<String> files) {
         ArrayList<Mp4Info> ret = new ArrayList<>();
         SharedPreferences preferences = context.getSharedPreferences("mp42gif", Context.MODE_PRIVATE);
         MediaMetadataRetriever retriever = new MediaMetadataRetriever();
-        for (File f : files) {
-            String path = f.getAbsolutePath();
+        for (String path : files) {
+
             if (!preferences.contains(path)) {
                 String md5 = Utils.MD5(path);
                 String output = getDir(".cache") + md5 + ".jpg";

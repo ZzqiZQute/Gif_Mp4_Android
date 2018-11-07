@@ -55,6 +55,14 @@ JNIEXPORT jint JNICALL Java_zz_app_gif2mp4_Utils_gifframes
 
 /*
  * Class:     zz_app_gif2mp4_Utils
+ * Method:    gifframesAndTime
+ * Signature: (Ljava/lang/String;)[J
+ */
+JNIEXPORT jlongArray JNICALL Java_zz_app_gif2mp4_Utils_gifframesAndTime
+  (JNIEnv *, jclass, jstring);
+
+/*
+ * Class:     zz_app_gif2mp4_Utils
  * Method:    gifavgrate
  * Signature: (Ljava/lang/String;)F
  */

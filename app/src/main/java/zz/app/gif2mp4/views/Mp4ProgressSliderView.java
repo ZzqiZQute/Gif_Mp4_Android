@@ -219,7 +219,7 @@ public class Mp4ProgressSliderView extends View {
         int action = event.getAction();
         int x= (int) event.getX();
         int y= (int) event.getY();
-        switch (action) {
+        switch (action & MotionEvent.ACTION_MASK) {
             case MotionEvent.ACTION_DOWN:
                 if(leftBoundRegion.contains(x,y)){
                     offsetX=leftBoundRegion.getBounds().right-boundpadding-x;

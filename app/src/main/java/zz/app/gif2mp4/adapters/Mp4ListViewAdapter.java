@@ -50,7 +50,7 @@ import zz.app.gif2mp4.interfaces.IGoBack;
 public class Mp4ListViewAdapter extends RecyclerView.Adapter<Mp4ListViewAdapter.ViewHolder> {
 
     private final Handler handler;
-    private ArrayList<File> files;
+    private ArrayList<String> files;
     private ArrayList<Mp4Info> thumbnailMap;
     private ArrayList<String> showfiles;
     private Context context;
@@ -111,7 +111,7 @@ public class Mp4ListViewAdapter extends RecyclerView.Adapter<Mp4ListViewAdapter.
     public void onBindViewHolder(final ViewHolder viewHolder, int i) {
         try {
             if (i > 0 && i < showfiles.size() + 1) {
-                viewHolder.cvHintHolder.setVisibility(View.INVISIBLE);
+                viewHolder.cvHintHolder.setVisibility(View.GONE);
                 viewHolder.baudio = false;
                 viewHolder.btnAudio.setImageDrawable(new BitmapDrawable(context.getResources(), BitmapFactory.decodeResource(context.getResources(), R.drawable.audiooff)));
                 final float start = viewHolder.cardView.getCardElevation();
@@ -319,7 +319,7 @@ public class Mp4ListViewAdapter extends RecyclerView.Adapter<Mp4ListViewAdapter.
                         builder1.setMessage("是否删除Mp4？").setPositiveButton("是", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialogInterface, int i) {
-                                boolean b = FileUtils.deleteQuietly(files.get(viewHolder.getPosition() - 1));
+                                boolean b = FileUtils.deleteQuietly(new File(files.get(viewHolder.getPosition() - 1)));
                                 ShowMp4Activity activity = ((ShowMp4Activity) context);
                                 activity.freshimg();
                             }
@@ -373,11 +373,11 @@ public class Mp4ListViewAdapter extends RecyclerView.Adapter<Mp4ListViewAdapter.
         return showfiles.size() + 2;
     }
 
-    public ArrayList<File> getFiles() {
+    public ArrayList<String> getFiles() {
         return files;
     }
 
-    public void setFiles(ArrayList<File> files) {
+    public void setFiles(ArrayList<String> files) {
         this.files = files;
     }
 

@@ -163,7 +163,73 @@ END :
   return(retval);
 }
 
+JNIEXPORT jlongArray JNICALL Java_zz_app_gif2mp4_Utils_gifframesAndTime
+( JNIEnv * env, jclass cls, jstring path )
+  {
+  jlong arr1[2];
+  jlong ts=0;
+  char		*input		= jstringToChar( env, path );
+    AVFormatContext * inputFmtCtx	= avformat_alloc_context();
+    int		rtn		= avformat_open_input( &inputFmtCtx, input, NULL, NULL );
+    if ( rtn < 0 )
+     return NULL;
+    avformat_find_stream_info( inputFmtCtx, NULL );
+    if ( rtn < 0 )
+      return NULL;
+    int	vsnb	= -1;
+    int	i	= 0;
+    for (; i < inputFmtCtx->nb_streams; i++ )
+    {
+      if ( inputFmtCtx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO )
+      {
+        vsnb = i;
+        break;
+      }
+    }
+    AVCodecContext *decoderCtx = avcodec_alloc_context3( NULL );
+    if ( vsnb != -1 )
+    {
+      AVCodec* codec = avcodec_find_decoder( inputFmtCtx->streams[vsnb]->codecpar->codec_id );
+      avcodec_parameters_to_context( decoderCtx, inputFmtCtx->streams[vsnb]->codecpar );
+      avcodec_open2( decoderCtx, codec, NULL );
+    }
+    AVPacket pkt;
+    i = 0;
+    int duration;
+    int	ret;
+    AVFrame *frame = av_frame_alloc();
 
+    while ( av_read_frame( inputFmtCtx, &pkt ) >= 0 )
+    {
+      if ( pkt.stream_index == vsnb )
+      {
+        ret = avcodec_send_packet( decoderCtx, &pkt );
+        while ( ret >= 0 )
+        {
+          ret = avcodec_receive_frame( decoderCtx, frame );
+          if ( ret == AVERROR( EAGAIN ) || ret == AVERROR_EOF )
+            continue;
+          i++;
+          ts=frame->pts;
+          duration=frame->pkt_duration;
+          av_frame_unref(frame);
+          LOGE("pts = %"PRIu64"",frame->pts);
+        }
+      }
+    }
+    LOGE("pkt_duration = %"PRIu64"",frame->pkt_duration);
+    ts+=duration;
+    avcodec_free_context( &decoderCtx );
+    av_frame_free( &frame );
+    avformat_free_context( inputFmtCtx );
+    free( input );
+    arr1[0]=i;
+    arr1[1]=ts;
+ jlongArray arr=(*env)->NewLongArray(env,2);
+  (*env)->SetLongArrayRegion(env,arr,0,2,arr1);
+  return arr;
+
+ }
 JNIEXPORT jint JNICALL Java_zz_app_gif2mp4_Utils_gifframes
 ( JNIEnv * env, jclass cls, jstring path )
 {

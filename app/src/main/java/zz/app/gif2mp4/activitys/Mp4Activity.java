@@ -18,6 +18,7 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.transition.Transition;
 import android.transition.TransitionInflater;
+import android.util.Log;
 import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
@@ -55,6 +56,7 @@ public class Mp4Activity extends AppCompatActivity {
     private static final int MSG_CONVERTFINISH = 1;
     private static final int MSG_CONVERTPROGRESSCHANGED = 2;
     private static final int MSG_SCANFINISH = 3;
+    private static final String TAG = "Mp4Activity";
     M2GConfigAdapter adapter;
     RecyclerView recyclerView;
     String mp4path;
@@ -90,6 +92,7 @@ public class Mp4Activity extends AppCompatActivity {
     float left, top, right, bottom;
     private long currentLeft;
     private long currentRight;
+    private long lastTemp;
 
 
     @Override
@@ -367,10 +370,10 @@ public class Mp4Activity extends AppCompatActivity {
                                                 adapter.setMp4Info(mp4info);
                                                 player.start();
                                                 tvLeft.setText(Utils.mills2Str(0));
-                                                currentLeft=0;
+                                                currentLeft = 0;
                                                 tvRight.setText(Utils.mills2Str(player.getDuration()));
-                                                currentRight=player.getDuration();
-                                                adapter.setRealTime((currentRight-currentLeft)/1000.0);
+                                                currentRight = player.getDuration();
+                                                adapter.setRealTime((currentRight - currentLeft) / 1000.0);
                                                 adapter.notifyItemChanged(5);
                                                 progressThread.start();
 
@@ -494,7 +497,15 @@ public class Mp4Activity extends AppCompatActivity {
 
             @Override
             public void onSelectorDown(Selector which) {
-
+                if (player != null) {
+                    long duration = player.getDuration();
+                    switch (which) {
+                        case RIGHT:
+                            lastTemp = (long) ( player.getCurrentPosition());
+                            Log.d(TAG, "onSelectorDown: lastTemp="+lastTemp);
+                            break;
+                    }
+                }
             }
 
             @Override
@@ -505,7 +516,7 @@ public class Mp4Activity extends AppCompatActivity {
                     switch (which) {
                         case LEFT:
                             temp = (long) ((double) value * duration / Mp4ProgressSliderView.SCALE);
-                            currentLeft=temp;
+                            currentLeft = temp;
                             tvLeft.setText(Utils.mills2Str(temp));
                             compatibleSeekTo(temp);
                             tvCurrent.setText(Utils.mills2Str(temp));
@@ -514,7 +525,7 @@ public class Mp4Activity extends AppCompatActivity {
                             break;
                         case RIGHT:
                             temp = (long) ((double) value * duration / Mp4ProgressSliderView.SCALE);
-                            currentRight=temp;
+                            currentRight = temp;
                             tvRight.setText(Utils.mills2Str(temp));
                             compatibleSeekTo(temp);
                             tvCurrent.setText(Utils.mills2Str(temp));
@@ -522,7 +533,7 @@ public class Mp4Activity extends AppCompatActivity {
                             btnPlaypause.setImageResource(R.drawable.pause);
                             break;
                     }
-                    adapter.setRealTime((currentRight-currentLeft)/1000.0);
+                    adapter.setRealTime((currentRight - currentLeft) / 1000.0);
                     adapter.notifyItemChanged(5);
 
                 }
@@ -530,7 +541,7 @@ public class Mp4Activity extends AppCompatActivity {
 
             @Override
             public void onSelectorUp(Selector which, int value) {
-                int temp;
+                long temp;
                 int duration = player.getDuration();
                 switch (which) {
                     case LEFT:
@@ -539,7 +550,8 @@ public class Mp4Activity extends AppCompatActivity {
                         player.start();
                         break;
                     case RIGHT:
-                        temp = (int) ((double) mp4progress.getLbound() * duration / Mp4ProgressSliderView.SCALE);
+                        temp = lastTemp;
+                        Log.d(TAG, "onSelectorUp: lastTemp="+lastTemp);
                         compatibleSeekTo(temp);
                         player.start();
                         break;
@@ -606,8 +618,7 @@ public class Mp4Activity extends AppCompatActivity {
                                 } catch (InterruptedException e) {
                                     e.printStackTrace();
                                 }
-                                Utils.setAnalyseState(Utils.AnalyseState.Mp42Gif);
-                                double totalTime=(end - start)*adapter.getOutputTimeScale();
+                                double totalTime = (end - start) * adapter.getOutputTimeScale();
                                 Utils.setTotalTime(totalTime);
                                 int ret = Utils.mp42gif2(mp4path, outputPath, adapter.getOutfps(), adapter.getRotateType(),
                                         (int) (adapter.getOutwidth() * adapter.getScale()), (int) (adapter.getOutheight() * adapter.getScale()),
@@ -675,13 +686,12 @@ public class Mp4Activity extends AppCompatActivity {
                                 } catch (InterruptedException e) {
                                     e.printStackTrace();
                                 }
-                                Utils.setAnalyseState(Utils.AnalyseState.Mp42Mp4);
-                                double totalTime=(end - start)*adapter.getOutputTimeScale();
+                                double totalTime = (end - start) * adapter.getOutputTimeScale();
                                 Utils.setTotalTime(totalTime);
                                 int ret = Utils.mp42mp4(mp4path, outputPath, adapter.getOutfps(), adapter.getRotateType(),
                                         (int) (adapter.getOutwidth() * adapter.getScale()), (int) (adapter.getOutheight() * adapter.getScale()),
                                         (int) (left * mp4info[0]), (int) (top * mp4info[1]), (int) ((right - left) * mp4info[0]), (int) ((bottom - top) * mp4info[1]),
-                                        start, end, totalTime,adapter.getBitrate(),Utils.isMp4HasAudio(mp4path));
+                                        start, end, totalTime, adapter.getBitrate(), Utils.isMp4HasAudio(mp4path));
                                 Utils.setProgress2(0);
                                 handler.obtainMessage(MSG_CONVERTFINISH).sendToTarget();
                                 convertThread = null;
@@ -751,12 +761,13 @@ public class Mp4Activity extends AppCompatActivity {
         }
 
     }
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if(connection!=null){
+        if (connection != null) {
             unbindService(connection);
-            connection=null;
+            connection = null;
         }
 
     }
