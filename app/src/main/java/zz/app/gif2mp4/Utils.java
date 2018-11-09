@@ -320,6 +320,7 @@ public class Utils {
 
         Pattern pattern = Pattern.compile("(?:.*)PTS(?:.*)T:(.*)");
         Matcher matcher = pattern.matcher(line);
+        int value;
         if (matcher.find()) {
             try {
                 Double d = Double.parseDouble(matcher.group(1));
@@ -327,10 +328,12 @@ public class Utils {
                     jumpFlag = true;
                 }
                 if (!jumpFlag)
-                    setProgress2((int) (d * 100 / totalTime));
+                    value = (int) (d * 100 / totalTime);
                 else
-                    setProgress2((int) (d * 100 / totalTime) + 50);
+                    value = (int) (d * 100 / totalTime) + 50;
                 lasttime = d;
+                if (value > 100) value = 100;
+                setProgress2(value);
             } catch (NumberFormatException ignored) {
 
             }
