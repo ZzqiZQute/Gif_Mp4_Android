@@ -17,7 +17,7 @@
     <string name="str_wechatformat">微信格式</string>
     <string name="str_reversegif">Gif倒放</string>
     <string name="str_gifjump">Gif弹跳</string>
-    <string name="str_gimpToolKit">GiMp工具箱</string>
+    <string name="str_littleyellowtoolkit">小黄工具箱</string>
     <string-array name="sort_type">
         <item>按时间降序</item>
         <item>按时间升序</item>
@@ -39,5 +39,9 @@
         <item>顺时针90°</item>
         <item>180°</item>
         <item>逆时针90°</item>
+    </string-array>
+    <string-array name="functions">
+        <item>Gif基础工具</item>
+        <item>Mp4基础工具</item>
     </string-array>
 </resources>

@@ -18,7 +18,6 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Objects;
 
@@ -62,6 +61,7 @@ public class ShowGifActivity extends AppCompatActivity implements SwipeRefreshLa
                     case MSG_IMGOK:
                         adapter.setFiles(files);
                         adapter.setReady(true);
+                        adapter.setReadyToOpen(true);
                         adapter.notifyDataSetChanged();
                         swipeRefreshLayout.setRefreshing(false);
                         if (totop) {
@@ -106,6 +106,7 @@ public class ShowGifActivity extends AppCompatActivity implements SwipeRefreshLa
     }
 
     public void freshimg() {
+        adapter.setReadyToOpen(false);
         swipeRefreshLayout.setRefreshing(true);
         new Thread(new Runnable() {
             @Override

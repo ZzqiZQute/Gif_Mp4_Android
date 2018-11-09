@@ -53,6 +53,11 @@ public class GifListViewAdapter extends RecyclerView.Adapter<GifListViewAdapter.
         this.ready = ready;
     }
 
+    public void setReadyToOpen(boolean readyToOpen) {
+        this.readyToOpen = readyToOpen;
+    }
+
+    private boolean readyToOpen = true;
     private boolean ready=false;
     public GifListViewAdapter(Context context, Handler handler, ArrayList<String> files) {
         this.files = files;
@@ -101,48 +106,50 @@ public class GifListViewAdapter extends RecyclerView.Adapter<GifListViewAdapter.
             gifView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(final View v) {
-                    Intent intent = new Intent(context, GifActivity.class);
-                    //Intent intent = new Intent(context, TestActivity.class);
-                    ShowGifActivity activity = ((ShowGifActivity) context);
-                    if (null != gifView.getDrawable() && gifView.getDrawable() instanceof GifDrawable) {
-                        if (!Utils.checkgif(new File(files.get(viewHolder.getPosition()-1)).getAbsolutePath())) {
-                            Toast.makeText(activity, "无效的Gif文件或为静态Gif", Toast.LENGTH_SHORT).show();
+                    if (readyToOpen) {
+                        Intent intent = new Intent(context, GifActivity.class);
+                        //Intent intent = new Intent(context, TestActivity.class);
+                        ShowGifActivity activity = ((ShowGifActivity) context);
+                        if (null != gifView.getDrawable() && gifView.getDrawable() instanceof GifDrawable) {
+                            if (!Utils.checkgif(new File(files.get(viewHolder.getPosition() - 1)).getAbsolutePath())) {
+                                Toast.makeText(activity, "无效的Gif文件或为静态Gif", Toast.LENGTH_SHORT).show();
+                            } else {
+                                Utils.getManager().gif2mp4handler = new ActivityTransitionController((ShowGifActivity) context);
+                                Utils.getManager().gif2mp4handler.setShowListener(new ActivityTransitionController.ShowListener() {
+                                    @Override
+                                    public void onShow(IGoBack from) {
+                                        from.go();
+                                    }
+                                });
+                                Utils.getManager().gif2mp4handler.setHideListener(new ActivityTransitionController.HideListener() {
+                                    @Override
+                                    public void onHide(IGoBack from) {
+                                        from.back();
+                                    }
+                                });
+                                intent.putExtra("inputPath", new File(files.get(viewHolder.getPosition() - 1)).getAbsolutePath());
+
+                                int w = gifView.getWidth();
+                                int h = gifView.getHeight();
+                                Bitmap bitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+                                Canvas canvas = new Canvas(bitmap);
+                                gifView.draw(canvas);
+                                Utils.getManager().gif2mp4handler.setBitmap(bitmap);
+                                int[] pos = new int[2];
+                                gifView.getLocationInWindow(pos);
+                                intent.putExtra("picy", pos[1]);
+                                int width = gifView.getDrawable().getIntrinsicWidth();
+                                int height = gifView.getDrawable().getIntrinsicHeight();
+                                intent.putExtra("width", width);
+                                intent.putExtra("height", height);
+                                context.startActivity(intent);
+                                ((ShowGifActivity) context).overridePendingTransition(0, 0);
+                            }
                         } else {
-                            Utils.getManager().gif2mp4handler = new ActivityTransitionController((ShowGifActivity) context);
-                            Utils.getManager().gif2mp4handler.setShowListener(new ActivityTransitionController.ShowListener() {
-                                @Override
-                                public void onShow(IGoBack from) {
-                                    from.go();
-                                }
-                            });
-                            Utils.getManager().gif2mp4handler.setHideListener(new ActivityTransitionController.HideListener() {
-                                @Override
-                                public void onHide(IGoBack from) {
-                                    from.back();
-                                }
-                            });
-                            intent.putExtra("inputPath", new File(files.get(viewHolder.getPosition()-1)).getAbsolutePath());
-
-                            int w = gifView.getWidth();
-                            int h = gifView.getHeight();
-                            Bitmap bitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
-                            Canvas canvas = new Canvas(bitmap);
-                            gifView.draw(canvas);
-                            Utils.getManager().gif2mp4handler.setBitmap(bitmap);
-                            int[] pos = new int[2];
-                            gifView.getLocationInWindow(pos);
-                            intent.putExtra("picy", pos[1]);
-                            int width = gifView.getDrawable().getIntrinsicWidth();
-                            int height = gifView.getDrawable().getIntrinsicHeight();
-                            intent.putExtra("width", width);
-                            intent.putExtra("height", height);
-                            context.startActivity(intent);
-                            ((ShowGifActivity) context).overridePendingTransition(0, 0);
+                            Toast.makeText(activity, "加载Gif失败", Toast.LENGTH_SHORT).show();
                         }
-                    } else {
-                        Toast.makeText(activity, "加载Gif失败", Toast.LENGTH_SHORT).show();
-                    }
 
+                    }
                 }
             });
             gifView.setOnLongClickListener(new View.OnLongClickListener() {

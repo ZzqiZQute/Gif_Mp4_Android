@@ -9,7 +9,7 @@
     <application
         android:allowBackup="true"
         android:icon="@drawable/gike"
-        android:label="@string/str_gimpToolKit"
+        android:label="@string/str_littleyellowtoolkit"
         android:roundIcon="@drawable/gike"
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
@@ -24,23 +24,28 @@
         <activity
             android:name=".activitys.ShowGifActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
-            android:screenOrientation="portrait" />
+            android:screenOrientation="portrait"
+            android:launchMode="singleTask" />
         <activity
             android:name=".activitys.GifActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:screenOrientation="portrait"
-            android:theme="@style/TranslucentWindow" />
+            android:theme="@style/TranslucentWindow"
+            android:launchMode="singleTask" />
         <activity
             android:name=".activitys.TestActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:screenOrientation="portrait"
-            android:theme="@style/TranslucentWindow" />
+            android:theme="@style/TranslucentWindow"
+            android:launchMode="singleTask" />
         <activity android:name=".activitys.ShowMp4Activity"
             android:configChanges="keyboardHidden|orientation|screenSize"
-            android:screenOrientation="portrait"/>
+            android:screenOrientation="portrait"
+            android:launchMode="singleTask" />
         <activity android:name=".activitys.Mp4Activity"
             android:configChanges="keyboardHidden|orientation|screenSize"
-            android:screenOrientation="portrait">
+            android:screenOrientation="portrait"
+            android:launchMode="singleTask">
 
         </activity>
 

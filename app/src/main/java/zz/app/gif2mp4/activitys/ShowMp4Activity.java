@@ -21,7 +21,6 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
-import java.io.File;
 import java.util.ArrayList;
 
 import zz.app.gif2mp4.R;
@@ -47,6 +46,7 @@ public class ShowMp4Activity extends AppCompatActivity implements SwipeRefreshLa
     boolean ascending;
     Toolbar toolbar;
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -70,8 +70,8 @@ public class ShowMp4Activity extends AppCompatActivity implements SwipeRefreshLa
                         adapter.setFiles(files);
                         adapter.setThumbnailMap(mp4Infos);
                         adapter.setReady(true);
+                        adapter.setReadyToOpen(true);
                         adapter.notifyDataSetChanged();
-
                         swipeRefreshLayout.setRefreshing(false);
                         if (totop) {
                             totop = false;
@@ -153,6 +153,7 @@ public class ShowMp4Activity extends AppCompatActivity implements SwipeRefreshLa
     }
 
     public void freshimg() {
+        adapter.setReadyToOpen(false);
         swipeRefreshLayout.setRefreshing(true);
         new Thread(new Runnable() {
             @Override

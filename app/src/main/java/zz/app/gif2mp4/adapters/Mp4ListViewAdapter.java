@@ -55,6 +55,11 @@ public class Mp4ListViewAdapter extends RecyclerView.Adapter<Mp4ListViewAdapter.
     private ArrayList<String> showfiles;
     private Context context;
 
+    public void setReadyToOpen(boolean readyToOpen) {
+        this.readyToOpen = readyToOpen;
+    }
+
+    private boolean readyToOpen = true;
 
     public MediaPlayer getMediaPlayer() {
         return mediaPlayer;
@@ -95,8 +100,6 @@ public class Mp4ListViewAdapter extends RecyclerView.Adapter<Mp4ListViewAdapter.
         this.handler = handler;
         this.thumbnailMap = new ArrayList<>();
         showfiles = new ArrayList<>();
-
-
     }
 
     @Override
@@ -285,29 +288,31 @@ public class Mp4ListViewAdapter extends RecyclerView.Adapter<Mp4ListViewAdapter.
                 viewHolder.cardView.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(final View v) {
-                        try {
-                            if (mediaPlayer != null)
-                                mediaPlayer.pause();
-                        } catch (IllegalArgumentException ignored) {
+                        if (readyToOpen) {
+                            try {
+                                if (mediaPlayer != null)
+                                    mediaPlayer.pause();
+                            } catch (IllegalArgumentException ignored) {
 
+                            }
+                            Intent intent = new Intent(context, Mp4Activity.class);
+                            Bundle bundle = ActivityOptions.makeSceneTransitionAnimation((ShowMp4Activity) context).toBundle();
+                            intent.putExtra("inputPath", path);
+                            context.startActivity(intent, bundle);
+                            Utils.getManager().mp42gifhandler = new ActivityTransitionController((ShowMp4Activity) context);
+                            Utils.getManager().mp42gifhandler.setShowListener(new ActivityTransitionController.ShowListener() {
+                                @Override
+                                public void onShow(IGoBack from) {
+                                    from.go();
+                                }
+                            });
+                            Utils.getManager().mp42gifhandler.setHideListener(new ActivityTransitionController.HideListener() {
+                                @Override
+                                public void onHide(IGoBack from) {
+                                    from.back();
+                                }
+                            });
                         }
-                        Intent intent = new Intent(context, Mp4Activity.class);
-                        Bundle bundle = ActivityOptions.makeSceneTransitionAnimation((ShowMp4Activity) context).toBundle();
-                        intent.putExtra("inputPath", path);
-                        context.startActivity(intent, bundle);
-                        Utils.getManager().mp42gifhandler = new ActivityTransitionController((ShowMp4Activity) context);
-                        Utils.getManager().mp42gifhandler.setShowListener(new ActivityTransitionController.ShowListener() {
-                            @Override
-                            public void onShow(IGoBack from) {
-                                from.go();
-                            }
-                        });
-                        Utils.getManager().mp42gifhandler.setHideListener(new ActivityTransitionController.HideListener() {
-                            @Override
-                            public void onHide(IGoBack from) {
-                                from.back();
-                            }
-                        });
                     }
                 });
                 viewHolder.cardView.setLongClickable(true);

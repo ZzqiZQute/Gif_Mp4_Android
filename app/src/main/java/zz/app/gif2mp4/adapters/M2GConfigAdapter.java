@@ -85,6 +85,7 @@ public class M2GConfigAdapter extends RecyclerView.Adapter<M2GConfigAdapter.View
         this.filesize = filesize;
     }
 
+
     private long filesize;
 
     public M2GConfigAdapter(Context context) {

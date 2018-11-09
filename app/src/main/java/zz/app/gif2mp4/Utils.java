@@ -44,8 +44,34 @@ public class Utils {
 
     }
 
+    public static native void welcome();
+
+    public static native boolean checkgif(String gifpath);
+
+    public static native int gifframes(String gifpath);
+
+    public static native long[] gifframesAndTime(String gifpath);
+
+    public static native float gifavgrate(String gifpath);
+
+    public static native int gif2mp4(String gifpath, String mp4path, int encodertypenum, double bitrate, double outputtime, int framecnt);
+
+    public static native boolean isMp4HasAudio(String path);
+
+    public static native int[] getMp4Size(String path);
+
+    public static native long[] getMp4Info(String info);
+
+    public static native int ffmpeg_native(String[] cmd);
+
+    public static native int mp42gif(String mp4path, String gifpath, double fps, int rotate, int width, int height, double start, double timeScale);
+
     public native static String getAnalyseLine();
 
+
+    private static boolean jumpFlag = false;
+
+    private static double lasttime;
 
     public static Double getTotalTime() {
         return totalTime;
@@ -127,7 +153,7 @@ public class Utils {
     private static ArrayList<String> exceptErrorGif(ArrayList<String> files) {
         ArrayList<String> ret = new ArrayList<>();
         for (String path : files) {
-            if (checkgif(path)){
+            if (checkgif(path)) {
                 ret.add(path);
             }
         }
@@ -290,30 +316,28 @@ public class Utils {
         }
     }
 
-    public static native void welcome();
+    public static void analyseProgress(String line) {
 
-    public static native boolean checkgif(String gifpath);
+        Pattern pattern = Pattern.compile("(?:.*)PTS(?:.*)T:(.*)");
+        Matcher matcher = pattern.matcher(line);
+        if (matcher.find()) {
+            try {
+                Double d = Double.parseDouble(matcher.group(1));
+                if (d < lasttime) {
+                    jumpFlag = true;
+                }
+                if (!jumpFlag)
+                    setProgress2((int) (d * 100 / totalTime));
+                else
+                    setProgress2((int) (d * 100 / totalTime) + 50);
+                lasttime = d;
+            } catch (NumberFormatException ignored) {
 
-    public static native int gifframes(String gifpath);
+            }
+        }
+    }
 
-    public static native long[] gifframesAndTime(String gifpath);
-
-    public static native float gifavgrate(String gifpath);
-
-    public static native int gif2mp4(String gifpath, String mp4path, int encodertypenum, double bitrate, double outputtime, int framecnt);
-
-    public static native boolean isMp4HasAudio(String path);
-
-    public static native int[] getMp4Size(String path);
-
-    public static native long[] getMp4Info(String info);
-
-    public static native int ffmpeg_native(String[] cmd);
-
-    public static native int mp42gif(String mp4path, String gifpath, double fps, int rotate, int width, int height, double start, double timeScale);
-
-
-    public static int gif2mp42(String gifpath, String mp4path, int encodertypenum, double bitrate, double outputtime, double actualTime, int w, int h, int rotate, double rate) {
+    public static void gif2mp42(String gifpath, String mp4path, int encodertypenum, double bitrate, double outputtime, double actualTime, int w, int h, int rotate, double rate) {
         FFMpegCommand command = new FFMpegCommand();
         command.addCmd("-i");
         command.addCmd(gifpath);
@@ -353,11 +377,10 @@ public class Utils {
         command.addCmd("yuv420p");
         command.addCmd("-y");
         command.addCmd(mp4path);
-        ffmpeg_native(command.convertCmd());
-        return 0;
+        startConvert(command.convertCmd());
     }
 
-    public static int gif2gif(String gifpath, String gifpath2, double outputtime, double actualTime, int w, int h, int rotate) {
+    public static void gif2gif(String gifpath, String gifpath2, double outputtime, double actualTime, int w, int h, int rotate) {
         FFMpegCommand command = new FFMpegCommand();
         command.addCmd("-i");
         command.addCmd(gifpath);
@@ -384,24 +407,8 @@ public class Utils {
 
         command.addCmd("-y");
         command.addCmd(gifpath2);
-        ffmpeg_native(command.convertCmd());
-        return 0;
+        startConvert(command.convertCmd());
     }
-
-
-    public static void analyseProgress(String line) {
-        Pattern pattern = Pattern.compile("(?:.*)PTS(?:.*)T:(.*)");
-        Matcher matcher = pattern.matcher(line);
-        if (matcher.find()) {
-            try {
-                Double d = Double.parseDouble(matcher.group(1));
-                setProgress2((int) (d * 100 / totalTime));
-            } catch (NumberFormatException ignored) {
-
-            }
-        }
-    }
-
 
     public static int mp42gif2(String mp4path, String gifpath, double fps, int rotate, int width, int height,
                                int x, int y, int w, int h, double start, double end, double totalTime) {
@@ -438,11 +445,11 @@ public class Utils {
         command.addCmd(totalTime + "");
         command.addCmd("-y");
         command.addCmd(gifpath);
-        ffmpeg_native(command.convertCmd());
+        startConvert(command.convertCmd());
         return 0;
     }
 
-    public static int gifreverse(String gifpath, String outgifpath, double outputtime, double actualtime, int w, int h, int rotate) {
+    public static void gifreverse(String gifpath, String outgifpath, double outputtime, double actualtime, int w, int h, int rotate) {
         FFMpegCommand command = new FFMpegCommand();
         command.addCmd("-i");
         command.addCmd(gifpath);
@@ -475,11 +482,10 @@ public class Utils {
 
         command.addCmd("-y");
         command.addCmd(outgifpath);
-        ffmpeg_native(command.convertCmd());
-        return 0;
+        startConvert(command.convertCmd());
     }
 
-    public static int gifjump(String gifpath, String outgifpath, double outputtime, double actualtime, int w, int h, int rotate) {
+    public static void gifjump(String gifpath, String outgifpath, double outputtime, double actualtime, int w, int h, int rotate) {
         FFMpegCommand command = new FFMpegCommand();
         command.addCmd("-i");
         command.addCmd(gifpath);
@@ -534,8 +540,7 @@ public class Utils {
 
         command.addCmd("-y");
         command.addCmd(outgifpath);
-        ffmpeg_native(command.convertCmd());
-        return 0;
+        startConvert(command.convertCmd());
     }
 
     public static int mp42mp4(String mp4path, String gifpath, double fps, int rotate, int width, int height,
@@ -582,8 +587,15 @@ public class Utils {
         command.addCmd("yuv420p");
         command.addCmd("-y");
         command.addCmd(gifpath);
-        ffmpeg_native(command.convertCmd());
+        startConvert(command.convertCmd());
+
         return 0;
+    }
+
+    private static void startConvert(String[] cmd) {
+        lasttime = 0;
+        jumpFlag = false;
+        ffmpeg_native(cmd);
     }
 
 
